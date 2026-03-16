@@ -2,6 +2,8 @@
 
 Upload local image/media files to Atlas Cloud to get a publicly accessible URL. Use this when you need to provide an `image_url` to image-editing or image-to-video models but only have a local file.
 
+> **WARNING**: This upload endpoint is strictly for temporary use with Atlas Cloud generation tasks only. Do NOT use it as permanent file hosting, CDN, or for any purpose unrelated to Atlas Cloud image/video generation. Abuse (e.g., bulk uploads, hosting illegal or unrelated content) may result in immediate API key suspension.
+
 ## Table of Contents
 - [Python](#python)
 - [Node.js / TypeScript](#nodejs--typescript)

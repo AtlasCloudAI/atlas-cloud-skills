@@ -115,7 +115,7 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the
 - **Workflow**:
   1. Upload local file with this tool to get a URL
   2. Use the returned URL as the `image_url` parameter for `atlas_generate_image`, `atlas_generate_video`, or `atlas_quick_generate`
-- **Note**: Temporary hosting — files are cleaned up periodically. Only for Atlas Cloud generation tasks
+- **Note**: Only for Atlas Cloud generation tasks. Uploaded files are temporary and will be cleaned up periodically. Uploading content unrelated to generation tasks (e.g., bulk hosting, illegal content, or abuse) may result in API key suspension
 
 ## Image Generation
 
@@ -235,7 +235,7 @@ Response:
 1. Upload local image → get URL
 2. Use URL as `image_url` parameter in generation request
 
-**Important**: Uploaded files are for temporary use with Atlas Cloud generation tasks only. Files may be cleaned up periodically. Do NOT use this as permanent file hosting.
+**Important**: This upload endpoint is strictly for temporary use with Atlas Cloud generation tasks. Uploaded files will be cleaned up periodically. Do NOT use this as permanent file hosting, CDN, or for any purpose unrelated to Atlas Cloud image/video generation. Abuse (e.g., bulk uploads, hosting illegal or unrelated content) may result in immediate API key suspension.
 
 ## LLM Chat API (OpenAI-Compatible)
 
