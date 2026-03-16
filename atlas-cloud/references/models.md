@@ -5,7 +5,7 @@
 Model IDs are updated frequently. **Never guess or hardcode model IDs without verification.** Always fetch the latest list first:
 
 ```
-GET https://console.atlascloud.ai/api/v1/models
+GET https://api.atlascloud.ai/api/v1/models
 ```
 
 This endpoint requires no authentication. The response contains all available models with their exact `model` ID, `type`, `displayName`, `price`, and `schema` URL.
@@ -94,7 +94,7 @@ Each model has a `schema` field pointing to an OpenAPI JSON file that describes 
 import requests
 
 # Get public model list
-models = requests.get("https://console.atlascloud.ai/api/v1/models").json()["data"]
+models = requests.get("https://api.atlascloud.ai/api/v1/models").json()["data"]
 public_models = [m for m in models if m.get("display_console") == True]
 
 # Find a specific model

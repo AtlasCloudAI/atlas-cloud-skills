@@ -18,7 +18,7 @@ import re
 
 ATLAS_API_KEY = os.environ.get("ATLASCLOUD_API_KEY")
 BASE_URL = "https://api.atlascloud.ai/api/v1"
-MODELS_URL = "https://console.atlascloud.ai/api/v1/models"
+MODELS_URL = "https://api.atlascloud.ai/api/v1/models"
 
 HEADERS = {
     "Authorization": f"Bearer {ATLAS_API_KEY}",
@@ -260,7 +260,7 @@ if __name__ == "__main__":
 ```typescript
 const ATLAS_API_KEY = process.env.ATLASCLOUD_API_KEY;
 const BASE_URL = 'https://api.atlascloud.ai/api/v1';
-const MODELS_URL = 'https://console.atlascloud.ai/api/v1/models';
+const MODELS_URL = 'https://api.atlascloud.ai/api/v1/models';
 
 const headers = {
   Authorization: `Bearer ${ATLAS_API_KEY}`,

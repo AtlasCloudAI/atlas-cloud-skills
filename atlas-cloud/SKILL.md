@@ -43,7 +43,7 @@ Content-Type: application/json
 | `GET` | `/api/v1/model/prediction/{id}` | Check generation task status and result |
 | `POST` | `/api/v1/model/uploadMedia` | Upload local media file to get a public URL |
 | `POST` | `/v1/chat/completions` | LLM chat (OpenAI-compatible format) |
-| `GET` | `console.atlascloud.ai/api/v1/models` | List all available models (no auth required) |
+| `GET` | `api.atlascloud.ai/api/v1/models` | List all available models (no auth required) |
 
 ## MCP Tools (9 Tools)
 
@@ -333,7 +333,7 @@ Read the corresponding reference file when you need to write specific integratio
 Model IDs change frequently as new versions are released and old ones are deprecated. **Unless you are 100% certain of an exact model ID, always fetch the real model list first** before writing any integration code:
 
 ```
-GET https://console.atlascloud.ai/api/v1/models
+GET https://api.atlascloud.ai/api/v1/models
 ```
 
 This endpoint requires no authentication and returns all currently available models with their exact IDs, types, and pricing. Never guess or fabricate model IDs — an incorrect model ID will cause API calls to fail.
@@ -381,7 +381,7 @@ When writing code for the user, always include a step to verify the model ID exi
 
 The model list is continuously updated. Get the latest full list:
 ```
-GET https://console.atlascloud.ai/api/v1/models
+GET https://api.atlascloud.ai/api/v1/models
 ```
 This endpoint requires no authentication.
 
