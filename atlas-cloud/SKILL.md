@@ -1,6 +1,6 @@
 ---
 name: atlas-cloud
-description: "Atlas Cloud API integration skill — quickly call 300+ AI image generation, video generation, and LLM models through a unified API. Use this skill when the user needs to integrate AI image generation (e.g., Flux, Seedream, DALL-E), AI video generation (e.g., Kling, Sora, Seedance), or call LLM APIs (OpenAI-compatible format) into their project. Applicable scenarios include: generating images, generating videos, calling large language models, using Atlas Cloud API, configuring ATLASCLOUD_API_KEY, querying available model lists, image-to-video, text-to-image, text-to-video, AI content creation tool integration. Even if the user doesn't explicitly mention Atlas Cloud, this skill should be considered whenever AI media generation API integration development is involved."
+description: "Atlas Cloud API integration skill — quickly call 300+ AI image generation, video generation, and LLM models through a unified API. Use this skill when the user needs to integrate AI image generation (e.g., Flux, Seedream, DALL-E), AI video generation (e.g., Kling, Sora, Seedance), or call LLM APIs (OpenAI-compatible format) into their project. Applicable scenarios include: generating images, generating videos, calling large language models, using Atlas Cloud API, configuring ATLASCLOUD_API_KEY, querying available model lists, searching models by keyword, uploading local images/media files, one-step quick generation, image-to-video, text-to-image, text-to-video, AI content creation tool integration. Even if the user doesn't explicitly mention Atlas Cloud, this skill should be considered whenever AI media generation API integration development is involved."
 ---
 
 # Atlas Cloud API Integration Guide
@@ -21,11 +21,11 @@ export ATLASCLOUD_API_KEY="your-api-key-here"
 
 ## API Architecture
 
-Atlas Cloud has two main API endpoints:
+Atlas Cloud has the following API endpoints:
 
 | Endpoint | Base URL | Purpose |
 |----------|----------|---------|
-| **Media Generation API** | `https://api.atlascloud.ai/api/v1` | Image generation, video generation, poll results |
+| **Media Generation API** | `https://api.atlascloud.ai/api/v1` | Image generation, video generation, poll results, upload media |
 | **LLM API** | `https://api.atlascloud.ai/v1` | Chat completions (OpenAI-compatible) |
 
 All requests require the following headers:
@@ -33,6 +33,89 @@ All requests require the following headers:
 Authorization: Bearer $ATLASCLOUD_API_KEY
 Content-Type: application/json
 ```
+
+### Full Endpoint List
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/model/generateImage` | Submit image generation task |
+| `POST` | `/api/v1/model/generateVideo` | Submit video generation task |
+| `GET` | `/api/v1/model/prediction/{id}` | Check generation task status and result |
+| `POST` | `/api/v1/model/uploadMedia` | Upload local media file to get a public URL |
+| `POST` | `/v1/chat/completions` | LLM chat (OpenAI-compatible format) |
+| `GET` | `console.atlascloud.ai/api/v1/models` | List all available models (no auth required) |
+
+## MCP Tools (9 Tools)
+
+If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the following 9 tools are available for direct invocation:
+
+### Model Discovery Tools
+
+#### `atlas_list_models` — List All Models
+- **Params**: `type` (optional): `"Text"` | `"Image"` | `"Video"`
+- **Purpose**: List all available models, optionally filtered by type
+- **Examples**: No params to list all; `type="Image"` for image models only
+
+#### `atlas_search_docs` — Search Models & Docs
+- **Params**: `query` (required): Search keyword matching model names, types, providers, tags
+- **Purpose**: Fuzzy search models by keyword. Returns detailed API schema info when there's only one match
+- **Examples**: `"video generation"`, `"deepseek"`, `"image edit"`, `"qwen"`
+
+#### `atlas_get_model_info` — Get Model Details
+- **Params**: `model` (required): Model ID, e.g. `"deepseek-ai/deepseek-v3.2"`
+- **Purpose**: Get full model info including API docs, input/output schema, pricing, cURL examples, Playground link
+- **Examples**: `model="deepseek-ai/deepseek-v3.2"`
+
+### Generation Tools
+
+#### `atlas_generate_image` — Generate Image
+- **Params**:
+  - `model` (required): Exact image model ID
+  - `params` (required): Model-specific parameter JSON object (e.g. `prompt`, `image_size`, etc.)
+- **Purpose**: Submit image generation task, returns prediction ID. Must verify model ID first via `atlas_list_models` or `atlas_search_docs`
+- **Returns**: prediction ID — use `atlas_get_prediction` to check result
+
+#### `atlas_generate_video` — Generate Video
+- **Params**:
+  - `model` (required): Exact video model ID
+  - `params` (required): Model-specific parameter JSON object (e.g. `prompt`, `duration`, `aspect_ratio`, `image_url`, etc.)
+- **Purpose**: Submit video generation task, returns prediction ID
+- **Returns**: prediction ID — video generation typically takes 1-5 minutes
+
+#### `atlas_quick_generate` — Quick Generate (One-Step)
+- **Params**:
+  - `model_keyword` (required): Model search keyword, e.g. `"nano banana"`, `"seedream"`, `"kling v3"`
+  - `type` (required): `"Image"` | `"Video"`
+  - `prompt` (required): Text description of what to generate
+  - `image_url` (optional): Source image URL for image-to-video or image editing models
+  - `extra_params` (optional): Additional model-specific parameters to override defaults
+- **Purpose**: One-step generation — automatically searches model → fetches schema → builds params → submits task. No need to know exact model IDs
+- **Examples**: `model_keyword="seedream v5", type="Image", prompt="a cute cat"`
+
+#### `atlas_chat` — LLM Chat
+- **Params**:
+  - `model` (required): LLM model ID
+  - `messages` (required): Array of message objects with `role` and `content`
+  - `temperature` (optional): Sampling temperature 0-2
+  - `max_tokens` (optional): Maximum response tokens
+  - `top_p` (optional): Nucleus sampling parameter 0-1
+- **Purpose**: Send OpenAI-compatible chat completion request
+
+### Utility Tools
+
+#### `atlas_get_prediction` — Check Generation Result
+- **Params**: `prediction_id` (required): Prediction ID returned from a generation request
+- **Purpose**: Check image/video generation task status and result
+- **Status values**: `starting` → `processing` → `completed`/`succeeded`/`failed`
+- **On completion**: Returns output URL list — can download locally via curl/wget
+
+#### `atlas_upload_media` — Upload Media File
+- **Params**: `file_path` (required): Absolute path to the local file
+- **Purpose**: Upload local image/media file to Atlas Cloud and get a publicly accessible URL. Use this to provide `image_url` for image editing or image-to-video models
+- **Workflow**:
+  1. Upload local file with this tool to get a URL
+  2. Use the returned URL as the `image_url` parameter for `atlas_generate_image`, `atlas_generate_video`, or `atlas_quick_generate`
+- **Note**: Temporary hosting — files are cleaned up periodically. Only for Atlas Cloud generation tasks
 
 ## Image Generation
 
@@ -121,6 +204,39 @@ Common video model parameters:
 
 Poll results using the same prediction endpoint. Video generation typically takes **1-5 minutes**.
 
+## Upload Media
+
+Upload a local file to Atlas Cloud to get a publicly accessible URL. This is required when you need to provide an `image_url` to image-editing or image-to-video models but only have a local file.
+
+### Upload Endpoint
+
+```
+POST https://api.atlascloud.ai/api/v1/model/uploadMedia
+Content-Type: multipart/form-data
+Authorization: Bearer $ATLASCLOUD_API_KEY
+```
+
+Request: multipart form data with a `file` field containing the file binary.
+
+Response:
+```json
+{
+  "code": 200,
+  "data": {
+    "download_url": "https://atlas-img.oss-accelerate-overseas.aliyuncs.com/media/xxx.jpg",
+    "filename": "photo.jpg",
+    "size": 123456
+  }
+}
+```
+
+### Workflow: Local Image → Image-to-Video
+
+1. Upload local image → get URL
+2. Use URL as `image_url` parameter in generation request
+
+**Important**: Uploaded files are for temporary use with Atlas Cloud generation tasks only. Files may be cleaned up periodically. Do NOT use this as permanent file hosting.
+
 ## LLM Chat API (OpenAI-Compatible)
 
 The LLM API is fully compatible with the OpenAI format. You can use the OpenAI SDK directly.
@@ -206,6 +322,8 @@ For full implementation code with polling logic, error handling, and streaming s
 - **`references/image-gen.md`** — Complete image generation implementation (Python / Node.js / cURL)
 - **`references/video-gen.md`** — Complete video generation implementation, including image-to-video
 - **`references/llm-chat.md`** — LLM chat implementation with streaming support
+- **`references/upload.md`** — Media file upload implementation (Python / Node.js / cURL)
+- **`references/quick-generate.md`** — Quick generation with auto model search (Python / Node.js)
 - **`references/models.md`** — Popular model ID quick reference
 
 Read the corresponding reference file when you need to write specific integration code.
@@ -276,12 +394,80 @@ This endpoint requires no authentication.
 | 429 | Rate limited | Wait and retry with exponential backoff |
 | 5xx | Server error | Wait and retry |
 
-## MCP Server Integration
+### Retry Strategy
 
-If the user is using Claude Code or other MCP-compatible tools, they can install the Atlas Cloud MCP Server for a more native experience:
+- **GET requests**: Auto retry up to 3 times with exponential backoff (1s → 2s → 4s)
+- **POST requests**: Do NOT retry — generation requests may create billable tasks, retrying could cause duplicate charges
+
+## MCP Server Installation
+
+Atlas Cloud MCP Server provides 9 tools for direct use in any MCP-compatible client. Prerequisites: Node.js >= 18 and an [Atlas Cloud API Key](https://www.atlascloud.ai/console/api-keys).
+
+### CLI Tools (One-Line Install)
 
 ```bash
-npx atlascloud-mcp
+# Claude Code
+claude mcp add atlascloud -- npx -y atlascloud-mcp
+
+# Gemini CLI
+gemini mcp add atlascloud -- npx -y atlascloud-mcp
+
+# OpenAI Codex CLI
+codex mcp add atlascloud -- npx -y atlascloud-mcp
+
+# Goose CLI
+goose mcp add atlascloud -- npx -y atlascloud-mcp
 ```
 
-See [atlascloud-mcp](https://www.npmjs.com/package/atlascloud-mcp) for configuration details.
+> For CLI tools, make sure to set the `ATLASCLOUD_API_KEY` environment variable in your shell:
+> ```bash
+> export ATLASCLOUD_API_KEY="your-api-key-here"
+> ```
+
+### IDEs & Editors (JSON Config)
+
+Add to your MCP configuration file — works with all MCP-compatible IDEs and editors:
+
+```json
+{
+  "mcpServers": {
+    "atlascloud": {
+      "command": "npx",
+      "args": ["-y", "atlascloud-mcp"],
+      "env": {
+        "ATLASCLOUD_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+| Client | Config Location |
+|--------|----------------|
+| [Cursor](https://cursor.com) | Settings → MCP → Add Server |
+| [Windsurf](https://codeium.com/windsurf) | Settings → MCP → Add Server |
+| [VS Code (Copilot)](https://code.visualstudio.com) | `.vscode/mcp.json` or Settings → MCP |
+| [Trae](https://trae.ai) | Settings → MCP → Add Server |
+| [Zed](https://zed.dev) | Settings → MCP |
+| [JetBrains IDEs](https://www.jetbrains.com) | Settings → Tools → AI Assistant → MCP |
+| [Claude Desktop](https://claude.ai/download) | `claude_desktop_config.json` |
+| [ChatGPT Desktop](https://openai.com/chatgpt/desktop) | Settings → MCP |
+| [Amazon Q Developer](https://aws.amazon.com/q/developer/) | MCP Configuration |
+
+### VS Code Extensions
+
+These VS Code extensions also support MCP with the same JSON config format:
+
+| Extension | Install |
+|-----------|---------|
+| [Cline](https://github.com/cline/cline) | MCP Marketplace → Add Server |
+| [Roo Code](https://github.com/RooCodeInc/Roo-Code) | Settings → MCP → Add Server |
+| [Continue](https://continue.dev) | `config.yaml` → MCP |
+
+### Skills Version (Alternative)
+
+If you prefer using Skills instead of MCP:
+
+```bash
+npx skills add AtlasCloudAI/atlas-cloud-skills
+```

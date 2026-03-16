@@ -8,23 +8,30 @@ Claude Code skills for [Atlas Cloud](https://www.atlascloud.ai) — an AI API ag
 
 Quickly integrate Atlas Cloud API into your projects. This skill provides:
 
-- Complete API reference for image generation, video generation, and LLM chat
+- Complete API reference for image generation, video generation, LLM chat, media upload, and quick generation
+- All 9 MCP tools documented: `atlas_list_models`, `atlas_search_docs`, `atlas_get_model_info`, `atlas_generate_image`, `atlas_generate_video`, `atlas_quick_generate`, `atlas_chat`, `atlas_get_prediction`, `atlas_upload_media`
 - Ready-to-use code templates in Python, Node.js/TypeScript, and cURL
 - Popular model IDs with pricing info
 - OpenAI SDK compatibility guide for LLM models
-- Error handling and best practices
+- Error handling, retry strategy, and best practices
 
 ## Installation
 
-### Claude Code CLI
+### One-Line Install
 
 ```bash
-claude skill add --from https://github.com/AtlasCloudAI/atlas-cloud-skills
+npx skills add AtlasCloudAI/atlas-cloud-skills
+```
+
+### Shell Script
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh
 ```
 
 ### Manual
 
-Copy the `atlas-cloud/` directory to your Claude Code skills folder.
+Copy the `atlas-cloud/` directory to `~/.claude/skills/atlas-cloud/`.
 
 ## Setup
 
@@ -42,18 +49,49 @@ export ATLASCLOUD_API_KEY="your-api-key-here"
 | **Image Generation** | `POST /api/v1/model/generateImage` | Nano Banana 2, Seedream v5.0, Z-Image |
 | **Video Generation** | `POST /api/v1/model/generateVideo` | Kling v3.0, Seedance v1.5, Vidu Q3 |
 | **LLM Chat** | `POST /v1/chat/completions` | Qwen3.5, Kimi K2.5, DeepSeek V3.2, GLM 5 |
+| **Upload Media** | `POST /api/v1/model/uploadMedia` | Upload local files to get public URLs |
+| **Quick Generate** | Auto model search + submit | One-step generation by keyword |
+| **Search Models** | Fuzzy search by keyword | Find models by name, type, or provider |
 
 ## MCP Server
 
-For an even more native experience in Claude Code, install the [Atlas Cloud MCP Server](https://www.npmjs.com/package/atlascloud-mcp):
+For a more native experience, install the [Atlas Cloud MCP Server](https://www.npmjs.com/package/atlascloud-mcp):
+
+### CLI Tools (One-Line Install)
 
 ```bash
-npx atlascloud-mcp
+# Claude Code
+claude mcp add atlascloud -- npx -y atlascloud-mcp
+
+# Gemini CLI
+gemini mcp add atlascloud -- npx -y atlascloud-mcp
+
+# OpenAI Codex CLI
+codex mcp add atlascloud -- npx -y atlascloud-mcp
 ```
+
+### IDEs & Editors (JSON Config)
+
+```json
+{
+  "mcpServers": {
+    "atlascloud": {
+      "command": "npx",
+      "args": ["-y", "atlascloud-mcp"],
+      "env": {
+        "ATLASCLOUD_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+Supports Cursor, Windsurf, VS Code (Copilot), Trae, Zed, JetBrains, Claude Desktop, ChatGPT Desktop, Amazon Q Developer, Cline, Roo Code, Continue, and all MCP-compatible clients.
 
 ## Links
 
 - [Atlas Cloud Website](https://www.atlascloud.ai)
 - [API Documentation](https://www.atlascloud.ai/models)
 - [MCP Server (npm)](https://www.npmjs.com/package/atlascloud-mcp)
+- [MCP Server (GitHub)](https://github.com/AtlasCloudAI/mcp-server)
 - [Console / API Keys](https://www.atlascloud.ai/console/api-keys)
