@@ -1,20 +1,32 @@
 # Atlas Cloud — Model Reference
 
-## IMPORTANT: Always Fetch Real Model IDs
+## CRITICAL: Fetch From the API — Do Not Fabricate
 
-Model IDs are updated frequently. **Never guess or hardcode model IDs without verification.** Always fetch the latest list first:
+> The tables in this file are a **snapshot, not a source of truth**. Model IDs, prices, parameter names, defaults, and enums all change. Any ID, parameter, or schema detail in code or user-facing output MUST come from a live API fetch performed in the current session.
 
-```
-GET https://api.atlascloud.ai/api/v1/models
-```
+**Mandatory workflow — no exceptions:**
 
-This endpoint requires no authentication. The response contains all available models with their exact `model` ID, `type`, `displayName`, `price`, and `schema` URL.
+1. **Always fetch the model list first.** No authentication required:
+   ```
+   GET https://api.atlascloud.ai/api/v1/models
+   ```
+   If the MCP server is installed, call `atlas_list_models` or `atlas_search_docs` instead — same live data.
 
-**Important:** Only models with `display_console: true` are publicly available. Always filter out models where `display_console` is `false` — those are internal and not accessible to regular users.
+2. **Filter to `display_console: true`.** Any model with `display_console: false` is internal and will fail for regular users. Do not surface those IDs.
 
-When building integrations, either:
-1. Fetch the model list at runtime and filter by `display_console: true` to get valid IDs, or
-2. Verify the model ID against the API before hardcoding it
+3. **Before writing a request body, fetch the schema.** Never guess parameter names, enums, defaults, or required fields. For any target model:
+   - MCP: `atlas_get_model_info` with the exact model ID
+   - HTTP: GET the `schema` URL from the model entry (OpenAPI JSON) and read `components.schemas.Input.properties`
+
+   Build the payload strictly from the fields listed there. If a parameter you want isn't in the schema, it doesn't exist on that model.
+
+4. **Hardcoded IDs are only acceptable after verification.** Either fetch and filter at runtime, or confirm the ID against a live `GET /models` response in the same session before embedding it.
+
+**Red flags — stop and fetch if you catch yourself doing any of these:**
+- Copying a model ID from memory or from these tables without a same-session API check
+- Guessing a parameter name (e.g. assuming `aspect_ratio` when the model uses `ratio`, or `image_url` when it uses `image`)
+- Sending a parameter not listed in the schema
+- Reporting a price to the user that wasn't in the live API response
 
 ---
 
@@ -38,6 +50,12 @@ When building integrations, either:
 
 | Model ID | Name | Price |
 |----------|------|-------|
+| `bytedance/seedance-2.0/text-to-video` | **Seedance 2.0 Text-to-Video** (native audio, 4-15s, up to 1080p) | $0.127/gen |
+| `bytedance/seedance-2.0/image-to-video` | **Seedance 2.0 Image-to-Video** (first+last frame, native audio) | $0.127/gen |
+| `bytedance/seedance-2.0/reference-to-video` | **Seedance 2.0 Reference-to-Video** (multimodal: up to 9 images + 3 videos + 1 audio) | $0.127/gen |
+| `bytedance/seedance-2.0-fast/text-to-video` | Seedance 2.0 Fast Text-to-Video | $0.101/gen |
+| `bytedance/seedance-2.0-fast/image-to-video` | Seedance 2.0 Fast Image-to-Video | $0.101/gen |
+| `bytedance/seedance-2.0-fast/reference-to-video` | Seedance 2.0 Fast Reference-to-Video | $0.101/gen |
 | `kwaivgi/kling-v3.0-std/text-to-video` | Kling v3.0 Std Text-to-Video | $0.153/gen |
 | `kwaivgi/kling-v3.0-std/image-to-video` | Kling v3.0 Std Image-to-Video | $0.153/gen |
 | `kwaivgi/kling-v3.0-pro/text-to-video` | Kling v3.0 Pro Text-to-Video | $0.204/gen |

@@ -1,5 +1,9 @@
 # Atlas Cloud Skills
 
+> 🎬 **Seedance 2.0 is now live on Atlas Cloud!** ByteDance's flagship video model — native audio-video joint generation, up to 15s cinematic output, 1080p, multimodal reference (up to 9 images + 3 videos + 3 audio clips), and director-level camera control. Available now: [Text-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/text-to-video) · [Image-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/image-to-video) · [Reference-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/reference-to-video) · [Fast variants](https://www.atlascloud.ai/models/bytedance/seedance-2.0-fast/text-to-video) from **$0.101/gen**.
+>
+> 🔓 **Need the full-power build?** The **unrestricted / full-capability pipeline** — fewer guardrails, broader subject range, max-fidelity output — is available through [Atlas Cloud Workflow](https://www.atlascloud.ai/console/workflow). Hook it straight into your skill via the same API key.
+
 Claude Code skills for [Atlas Cloud](https://www.atlascloud.ai) — an AI API aggregation platform with 300+ image generation, video generation, and LLM models.
 
 ## Available Skills
@@ -47,7 +51,7 @@ export ATLASCLOUD_API_KEY="your-api-key-here"
 | Capability | Endpoint | Example Models |
 |------------|----------|----------------|
 | **Image Generation** | `POST /api/v1/model/generateImage` | Nano Banana 2, Seedream v5.0, Z-Image |
-| **Video Generation** | `POST /api/v1/model/generateVideo` | Kling v3.0, Seedance v1.5, Vidu Q3 |
+| **Video Generation** | `POST /api/v1/model/generateVideo` | Seedance 2.0, Kling v3.0, Vidu Q3 |
 | **LLM Chat** | `POST /v1/chat/completions` | Qwen3.5, Kimi K2.5, DeepSeek V3.2, GLM 5 |
 | **Upload Media** | `POST /api/v1/model/uploadMedia` | Upload local files to get public URLs |
 | **Quick Generate** | Auto model search + submit | One-step generation by keyword |
