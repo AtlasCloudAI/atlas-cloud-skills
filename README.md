@@ -4,7 +4,27 @@
 >
 > 🔓 **Need the full-power build?** The **unrestricted / full-capability pipeline** — fewer guardrails, broader subject range, max-fidelity output — is available through [Atlas Cloud Workflow](https://www.atlascloud.ai/console/workflow). Hook it straight into your skill via the same API key.
 
-Claude Code skills for [Atlas Cloud](https://www.atlascloud.ai) — an AI API aggregation platform with 300+ image generation, video generation, and LLM models.
+Use [Atlas Cloud](https://www.atlascloud.ai)'s 300+ image / video / LLM models inside Claude Code, Codex, Gemini CLI, and other AI coding agents. Generate images, videos & chat via curated Skills.
+
+> **[→ Get your free Atlas Cloud API key](https://www.atlascloud.ai/console/api-keys?utm_source=github&utm_campaign=atlas-cloud-skills)** — 300+ models, one key, OpenAI-compatible.
+
+## Supported Models
+
+- 🎬 **Video** — Seedance 2.0 · Kling 3 · Sora 2 · Veo 3.1 · HappyHorse 1 · Grok Imagine 1.5 · Wan 2.7
+- 🎨 **Image** — Nano Banana 2/Pro · GPT Image 2 · Flux 2 · Seedream 5
+- 💬 **LLM** — Claude · GPT · DeepSeek · MiniMax · Kimi · GLM · Qwen
+- 🔊 **Audio** — Grok TTS
+- 📚 **Explore more** — [300+ models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+
+## Featured Recipes
+
+Don't start from a blank prompt — start from a workflow. Three to try first:
+
+- 🛍️ [**Product Render → 30-Second Ad**](library/motion/product-render-to-ad.md) — turn a product still into a short ad clip
+- 🎭 [**Character Sheet → Multi-Shot AI Drama**](library/motion/character-to-drama.md) — one character, consistent across shots
+- 📱 [**Long Video → Vertical Short**](library/social/long-to-vertical-short.md) — reframe + animate for TikTok / Reels / Shorts
+
+**[Browse all 25 recipes in the library »](library/README.md)** — across 🎨 visual · 🎬 motion · ✂️ edit · 📱 social.
 
 ## Available Skills
 
@@ -92,10 +112,13 @@ codex mcp add atlascloud -- npx -y atlascloud-mcp
 
 Supports Cursor, Windsurf, VS Code (Copilot), Trae, Zed, JetBrains, Claude Desktop, ChatGPT Desktop, Amazon Q Developer, Cline, Roo Code, Continue, and all MCP-compatible clients.
 
-## Links
+## More Atlas Cloud Tools
 
-- [Atlas Cloud Website](https://www.atlascloud.ai)
-- [API Documentation](https://www.atlascloud.ai/models)
-- [MCP Server (npm)](https://www.npmjs.com/package/atlascloud-mcp)
-- [MCP Server (GitHub)](https://github.com/AtlasCloudAI/mcp-server)
-- [Console / API Keys](https://www.atlascloud.ai/console/api-keys)
+- 🧰 **Want to use it from the terminal?** → Install [atlascloud-cli](https://github.com/AtlasCloudAI/cli)
+- 🤖 **Want it as an MCP server?** → Install the [Atlas Cloud MCP Server](https://github.com/AtlasCloudAI/mcp-server)
+- 🎨 **ComfyUI nodes** → [atlascloud_comfyui](https://github.com/AtlasCloudAI/atlascloud_comfyui)
+- 🔁 **n8n nodes** → [n8n-nodes-atlascloud](https://github.com/AtlasCloudAI/n8n-nodes-atlascloud)
+- 💬 **Join our Discord** → [discord.gg/MWmMr4q9es](https://discord.gg/MWmMr4q9es)
+- 🌐 **Website** → [atlascloud.ai](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas-cloud-skills)
+
+**Docs:** [Models & API](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills) · [Console / API Keys](https://www.atlascloud.ai/console/api-keys?utm_source=github&utm_campaign=atlas-cloud-skills)
