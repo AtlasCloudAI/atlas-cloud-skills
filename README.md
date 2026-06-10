@@ -1,10 +1,18 @@
 # Atlas Cloud Skills
 
-> 🎬 **Seedance 2.0 is now live on Atlas Cloud!** ByteDance's flagship video model — native audio-video joint generation, up to 15s cinematic output, 1080p, multimodal reference (up to 9 images + 3 videos + 3 audio clips), and director-level camera control. Available now: [Text-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/text-to-video) · [Image-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/image-to-video) · [Reference-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/reference-to-video) · [Fast variants](https://www.atlascloud.ai/models/bytedance/seedance-2.0-fast/text-to-video) from **$0.101/gen**.
->
-> 🔓 **Need the full-power build?** The **unrestricted / full-capability pipeline** — fewer guardrails, broader subject range, max-fidelity output — is available through [Atlas Cloud Workflow](https://www.atlascloud.ai/console/workflow). Hook it straight into your skill via the same API key.
+<p align="center">
+  <a href="https://github.com/AtlasCloudAI/atlas-cloud-skills/blob/main/LICENSE"><img src="https://img.shields.io/github/license/AtlasCloudAI/atlas-cloud-skills?style=flat&colorA=18181B&colorB=28CF8D" alt="License"></a>
+  <a href="https://github.com/AtlasCloudAI/atlas-cloud-skills/stargazers"><img src="https://img.shields.io/github/stars/AtlasCloudAI/atlas-cloud-skills?style=flat&colorA=18181B&colorB=28CF8D" alt="Stars"></a>
+  <a href="https://github.com/AtlasCloudAI/atlas-cloud-skills/pulls"><img src="https://img.shields.io/badge/PRs-welcome-28CF8D?style=flat&colorA=18181B&colorB=28CF8D" alt="PRs Welcome"></a>
+  <a href="https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills"><img src="https://img.shields.io/badge/models-300%2B-28CF8D?style=flat&colorA=18181B&colorB=28CF8D" alt="300+ models"></a>
+  <a href="https://github.com/AtlasCloudAI/atlas-cloud-skills"><img src="https://img.shields.io/badge/install-npx%20skills%20add-28CF8D?style=flat&colorA=18181B&colorB=28CF8D" alt="npx skills add"></a>
+</p>
 
-Use [Atlas Cloud](https://www.atlascloud.ai)'s 300+ image / video / LLM models inside Claude Code, Codex, Gemini CLI, and other AI coding agents. Generate images, videos & chat via curated Skills.
+> 🎬 **Seedance 2.0 is now live on Atlas Cloud!** ByteDance's flagship video model — native audio-video joint generation, up to 15s cinematic output, 1080p, multimodal reference (up to 9 images + 3 videos + 3 audio clips), and director-level camera control. Available now: [Text-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Image-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/image-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Reference-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/reference-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Fast variants](https://www.atlascloud.ai/models/bytedance/seedance-2.0-fast/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) from **$0.101/gen**.
+>
+> 🔓 **Need the full-power build?** The **unrestricted / full-capability pipeline** — fewer guardrails, broader subject range, max-fidelity output — is available through [Atlas Cloud Workflow](https://www.atlascloud.ai/console/workflow?utm_source=github&utm_campaign=atlas-cloud-skills). Hook it straight into your skill via the same API key.
+
+Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas-cloud-skills)'s 300+ image / video / LLM models inside Claude Code, Codex, Gemini CLI, and other AI coding agents. Generate images, videos & chat via curated Skills.
 
 > **[→ Get your free Atlas Cloud API key](https://www.atlascloud.ai/console/api-keys?utm_source=github&utm_campaign=atlas-cloud-skills)** — 300+ models, one key, OpenAI-compatible.
 
@@ -15,6 +23,17 @@ Use [Atlas Cloud](https://www.atlascloud.ai)'s 300+ image / video / LLM models i
 - 💬 **LLM** — Claude · GPT · DeepSeek · MiniMax · Kimi · GLM · Qwen
 - 🔊 **Audio** — Grok TTS
 - 📚 **Explore more** — [300+ models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+
+## Contents
+
+- [Supported Models](#supported-models)
+- [Featured Recipes](#featured-recipes)
+- [Available Skills](#available-skills)
+- [Installation](#installation)
+- [Setup](#setup)
+- [What You Can Do](#what-you-can-do)
+- [MCP Server](#mcp-server)
+- [More Atlas Cloud Tools](#more-atlas-cloud-tools)
 
 ## Featured Recipes
 
@@ -59,12 +78,14 @@ Copy the `atlas-cloud/` directory to `~/.claude/skills/atlas-cloud/`.
 
 ## Setup
 
-1. Get an API Key at [Atlas Cloud Console](https://www.atlascloud.ai/console/api-keys)
+1. Get an API Key at [Atlas Cloud Console](https://www.atlascloud.ai/console/api-keys?utm_source=github&utm_campaign=atlas-cloud-skills)
 2. Set the environment variable:
 
 ```bash
 export ATLASCLOUD_API_KEY="your-api-key-here"
 ```
+
+See [`.env.example`](.env.example) for a ready-to-copy template.
 
 ## What You Can Do
 
@@ -114,11 +135,12 @@ Supports Cursor, Windsurf, VS Code (Copilot), Trae, Zed, JetBrains, Claude Deskt
 
 ## More Atlas Cloud Tools
 
-- 🧰 **Want to use it from the terminal?** → Install [atlascloud-cli](https://github.com/AtlasCloudAI/cli)
-- 🤖 **Want it as an MCP server?** → Install the [Atlas Cloud MCP Server](https://github.com/AtlasCloudAI/mcp-server)
-- 🎨 **ComfyUI nodes** → [atlascloud_comfyui](https://github.com/AtlasCloudAI/atlascloud_comfyui)
-- 🔁 **n8n nodes** → [n8n-nodes-atlascloud](https://github.com/AtlasCloudAI/n8n-nodes-atlascloud)
-- 💬 **Join our Discord** → [discord.gg/MWmMr4q9es](https://discord.gg/MWmMr4q9es)
-- 🌐 **Website** → [atlascloud.ai](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas-cloud-skills)
+- 🧰 Want to use it from the terminal? → [atlascloud-cli](https://github.com/AtlasCloudAI/cli)
+- 🤖 Want to use it in Claude Code / Cursor? → [Atlas Cloud MCP Server](https://github.com/AtlasCloudAI/mcp-server)
+- 🎬 Want it as a Claude Code / Codex / Gemini CLI Skill? → [atlas-cloud-skills](https://github.com/AtlasCloudAI/atlas-cloud-skills)
+- 🎨 ComfyUI nodes → [atlascloud_comfyui](https://github.com/AtlasCloudAI/atlascloud_comfyui)
+- 🔁 n8n nodes → [n8n-nodes-atlascloud](https://github.com/AtlasCloudAI/n8n-nodes-atlascloud)
+- 💬 Join our Discord → [discord.gg/MWmMr4q9es](https://discord.gg/MWmMr4q9es)
+- 🌐 Website → [atlascloud.ai](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas-cloud-skills)
 
 **Docs:** [Models & API](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills) · [Console / API Keys](https://www.atlascloud.ai/console/api-keys?utm_source=github&utm_campaign=atlas-cloud-skills)
