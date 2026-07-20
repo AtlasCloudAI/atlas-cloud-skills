@@ -1,0 +1,15 @@
+# Daily sync of the live Atlas Cloud model catalog into README ATLAS-MODELS blocks.
+# Logic lives in the org-shared reusable workflow: AtlasCloudAI/.github
+name: sync-models
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    uses: AtlasCloudAI/.github/.github/workflows/update-models-readme.yml@main
