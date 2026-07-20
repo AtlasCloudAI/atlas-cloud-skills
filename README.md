@@ -18,11 +18,16 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 
 ## Supported Models
 
-- 🎬 **Video** — Seedance 2.0 · Kling 3 · Sora 2 · Veo 3.1 · HappyHorse 1 · Grok Imagine 1.5 · Wan 2.7
-- 🎨 **Image** — Nano Banana 2/Pro · GPT Image 2 · Flux 2 · Seedream 5
-- 💬 **LLM** — Claude · GPT · DeepSeek · MiniMax · Kimi · GLM · Qwen
-- 🔊 **Audio** — Grok TTS
-- 📚 **Explore more** — [300+ models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+<!-- ATLAS-MODELS:START lang=en campaign=atlas-cloud-skills -->
+<!-- ⚠️ Auto-generated from the live model catalog by AtlasCloudAI/.github/scripts/update-models-readme.mjs — do not edit by hand. -->
+- 🎬 **Video** (159) — Seedance 2.0 Mini · HappyHorse-1.1 · Gemini Omni Flash · Avatar Omni Human 1.5 · Kling V3.0 Turbo · Kling Video O3 4K
+- 🎨 **Image** (96) — Seedream v5.0 Pro · Nano Banana 2 Lite · MAI-Image-2.5-Flash · MAI-Image-2.5
+- 🧊 **3D** (5) — Seed3D 2.0 · Hunyuan 3D Rapid · Hunyuan 3D Pro
+- 💬 **LLM** (57) — Grok 4.5 · KAT Coder Pro V2.5 · KAT Coder Air V2.5 · Doubao Seed 2.1 Turbo
+- 🔊 **Audio (TTS · Music · ASR)** (14) — Seed Audio 1.0 · xAI TTS v1 · ElevenLabs v3 · Suno chirp-auk
+
+- 📚 **Explore more** — [all 350 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+<!-- ATLAS-MODELS:END -->
 
 ## Contents
 
@@ -93,6 +98,9 @@ See [`.env.example`](.env.example) for a ready-to-copy template.
 |------------|----------|----------------|
 | **Image Generation** | `POST /api/v1/model/generateImage` | Nano Banana 2, Seedream v5.0, Z-Image |
 | **Video Generation** | `POST /api/v1/model/generateVideo` | Seedance 2.0, Kling v3.0, Vidu Q3 |
+| **Audio — TTS & Music** | `POST /api/v1/model/generateAudio` | Seed Audio 1.0, Suno Chirp v5, MiniMax Music |
+| **Speech-to-Text (ASR)** | `POST /api/v1/model/generateAudio` | Seed ASR 2.0, xAI STT |
+| **3D Generation** | `POST /api/v1/model/generateImage` | Seed3D 2.0, Hunyuan 3D (image/text-to-3D) |
 | **LLM Chat** | `POST /v1/chat/completions` | Qwen3.5, Kimi K2.5, DeepSeek V3.2, GLM 5 |
 | **Upload Media** | `POST /api/v1/model/uploadMedia` | Upload local files to get public URLs |
 | **Quick Generate** | Auto model search + submit | One-step generation by keyword |

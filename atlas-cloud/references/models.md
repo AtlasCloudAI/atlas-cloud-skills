@@ -93,7 +93,10 @@
 |------|----------|
 | `"Image"` | `POST https://api.atlascloud.ai/api/v1/model/generateImage` |
 | `"Video"` | `POST https://api.atlascloud.ai/api/v1/model/generateVideo` |
+| `"Audio"` | `POST https://api.atlascloud.ai/api/v1/model/generateAudio` |
 | `"Text"` | `POST https://api.atlascloud.ai/v1/chat/completions` |
+
+Type notes: 3D models (image/text-to-3D) are `"Image"` type; TTS, music, and speech-to-text (ASR) models are all `"Audio"` type; lipsync / talking-avatar models are `"Video"` type. See `references/audio-gen.md` for audio patterns.
 
 ## Price Structure
 

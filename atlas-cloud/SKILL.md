@@ -1,11 +1,11 @@
 ---
 name: atlas-cloud
-description: "Atlas Cloud API integration skill — quickly call 300+ AI image generation, video generation, and LLM models through a unified API. Use this skill when the user needs to integrate AI image generation (e.g., Flux, Seedream, DALL-E), AI video generation (e.g., Kling, Sora, Seedance), or call LLM APIs (OpenAI-compatible format) into their project. Applicable scenarios include: generating images, generating videos, calling large language models, using Atlas Cloud API, configuring ATLASCLOUD_API_KEY, querying available model lists, searching models by keyword, uploading local images/media files, one-step quick generation, image-to-video, text-to-image, text-to-video, AI content creation tool integration. Even if the user doesn't explicitly mention Atlas Cloud, this skill should be considered whenever AI media generation API integration development is involved."
+description: "Atlas Cloud API integration skill — quickly call 300+ AI image generation, video generation, audio (TTS, music, speech-to-text), 3D generation, and LLM models through a unified API. Use this skill when the user needs to integrate AI image generation (e.g., Flux, Seedream, DALL-E), AI video generation (e.g., Kling, Sora, Seedance), call LLM APIs (OpenAI-compatible format), generate speech/TTS or music (e.g., Seed Audio, Suno), transcribe audio to text (ASR), or turn images/text into 3D assets into their project. Applicable scenarios include: generating images, generating videos, calling large language models, using Atlas Cloud API, configuring ATLASCLOUD_API_KEY, querying available model lists, searching models by keyword, uploading local images/media files, one-step quick generation, image-to-video, text-to-image, text-to-video, text-to-speech, music generation, audio transcription, image-to-3D, AI content creation tool integration. Even if the user doesn't explicitly mention Atlas Cloud, this skill should be considered whenever AI media generation API integration development is involved."
 ---
 
 # Atlas Cloud API Integration Guide
 
-Atlas Cloud is an AI API aggregation platform that provides access to 300+ image, video, and LLM models through a unified interface. This skill helps you quickly integrate Atlas Cloud API into any project.
+Atlas Cloud is an AI API aggregation platform that provides access to 300+ image, video, audio (TTS · music · speech-to-text), 3D, and LLM models through a unified interface. This skill helps you quickly integrate Atlas Cloud API into any project.
 
 ## Quick Start
 
@@ -40,19 +40,21 @@ Content-Type: application/json
 |--------|----------|-------------|
 | `POST` | `/api/v1/model/generateImage` | Submit image generation task |
 | `POST` | `/api/v1/model/generateVideo` | Submit video generation task |
+| `POST` | `/api/v1/model/generateAudio` | Submit audio task — TTS, music generation, speech-to-text (ASR) |
 | `GET` | `/api/v1/model/prediction/{id}` | Check generation task status and result |
 | `POST` | `/api/v1/model/uploadMedia` | Upload local media file to get a public URL |
 | `POST` | `/v1/chat/completions` | LLM chat (OpenAI-compatible format) |
 | `GET` | `api.atlascloud.ai/api/v1/models` | List all available models (no auth required) |
 
-## MCP Tools (9 Tools)
+## MCP Tools (14 Tools)
 
-If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the following 9 tools are available for direct invocation:
+If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the following 14 tools are available for direct invocation:
 
 ### Model Discovery Tools
 
 #### `atlas_list_models` — List All Models
-- **Params**: `type` (optional): `"Text"` | `"Image"` | `"Video"`
+- **Params**: `type` (optional): `"Text"` | `"Image"` | `"Video"` | `"Audio"`
+- **Type notes**: 3D models are Image-type; TTS, music, and speech-to-text models are Audio-type; lipsync / talking-avatar models are Video-type
 - **Purpose**: List all available models, optionally filtered by type
 - **Examples**: No params to list all; `type="Image"` for image models only
 
@@ -82,12 +84,27 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the
 - **Purpose**: Submit video generation task, returns prediction ID
 - **Returns**: prediction ID — video generation typically takes 1-5 minutes
 
+#### `atlas_generate_audio` — Generate Audio (TTS & Music)
+- **Params**:
+  - `model` (required): Exact audio model ID (e.g. `"bytedance/seed-audio-1.0"`, `"suno/chirp-v5"`, `"minimax/music-2.6"`)
+  - `params` (required): Model-specific JSON — TTS models usually take `text`; music models usually take `prompt` and/or `lyrics`
+- **Purpose**: Submit audio generation task — covers BOTH text-to-speech and music/song generation
+- **Returns**: prediction ID — the output is an audio file URL
+
+#### `atlas_transcribe_audio` — Transcribe Audio (Speech-to-Text)
+- **Params**:
+  - `model` (required): Exact speech-to-text model ID (e.g. `"bytedance/seed-asr-2.0"`)
+  - `params` (required): Model-specific JSON — main field is usually `audio_url`; for local files call `atlas_upload_media` first
+- **Purpose**: Transcribe speech to text (ASR) — meetings, interviews, voice notes
+- **Returns**: prediction ID — the output is the transcribed text
+
 #### `atlas_quick_generate` — Quick Generate (One-Step)
 - **Params**:
   - `model_keyword` (required): Model search keyword, e.g. `"nano banana"`, `"seedream"`, `"kling v3"`
-  - `type` (required): `"Image"` | `"Video"`
+  - `type` (required): `"Image"` | `"Video"` | `"Audio"`
   - `prompt` (required): Text description of what to generate
-  - `image_url` (optional): Source image URL for image-to-video or image editing models
+  - `image_url` (optional): Source image URL for image-to-video, image editing, image-to-3D, or talking-avatar models
+  - `audio_url` (optional): Source audio URL for lipsync / talking-avatar or speech-to-text models
   - `extra_params` (optional): Additional model-specific parameters to override defaults
 - **Purpose**: One-step generation — automatically searches model → fetches schema → builds params → submits task. No need to know exact model IDs
 - **Examples**: `model_keyword="seedream v5", type="Image", prompt="a cute cat"`
@@ -116,6 +133,20 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the
   1. Upload local file with this tool to get a URL
   2. Use the returned URL as the `image_url` parameter for `atlas_generate_image`, `atlas_generate_video`, or `atlas_quick_generate`
 - **Note**: Only for Atlas Cloud generation tasks. Uploaded files are temporary and will be cleaned up periodically. Uploading content unrelated to generation tasks (e.g., bulk hosting, illegal content, or abuse) may result in API key suspension
+
+### Account Tools
+
+#### `atlas_get_balance` — Account Balance
+- **Params**: none
+- **Purpose**: Get the account balance and credit summary for the current API key
+
+#### `atlas_get_model_usage` — Daily Usage
+- **Params**: `start_date`, `end_date` (optional date range)
+- **Purpose**: Per-day model usage (requests, tokens, image/video counts)
+
+#### `atlas_get_model_costs` — Daily Costs
+- **Params**: `start_date`, `end_date` (optional date range)
+- **Purpose**: Per-day spend buckets per model
 
 ## Image Generation
 
@@ -337,6 +368,7 @@ For full implementation code with polling logic, error handling, and streaming s
 - **`references/llm-chat.md`** — LLM chat implementation with streaming support
 - **`references/upload.md`** — Media file upload implementation (Python / Node.js / cURL)
 - **`references/quick-generate.md`** — Quick generation with auto model search (Python / Node.js)
+- **`references/audio-gen.md`** — Audio implementation: TTS, music generation, speech-to-text (Python / Node.js / cURL)
 - **`references/models.md`** — Popular model ID quick reference
 
 Read the corresponding reference file when you need to write specific integration code.
@@ -439,7 +471,7 @@ This endpoint requires no authentication.
 
 ## MCP Server Installation
 
-Atlas Cloud MCP Server provides 9 tools for direct use in any MCP-compatible client. Prerequisites: Node.js >= 18 and an [Atlas Cloud API Key](https://www.atlascloud.ai/console/api-keys).
+Atlas Cloud MCP Server provides 14 tools for direct use in any MCP-compatible client. Prerequisites: Node.js >= 18 and an [Atlas Cloud API Key](https://www.atlascloud.ai/console/api-keys).
 
 ### CLI Tools (One-Line Install)
 
