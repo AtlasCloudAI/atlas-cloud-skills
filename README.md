@@ -21,12 +21,12 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 <!-- ATLAS-MODELS:START lang=en campaign=atlas-cloud-skills -->
 <!-- ⚠️ Auto-generated from the live model catalog by AtlasCloudAI/.github/scripts/update-models-readme.mjs — do not edit by hand. -->
 - 🎬 **Video** (170) — Seedance 2.0 Mini · HappyHorse-1.1 · Gemini Omni Flash · Avatar Omni Human 1.5 · Kling V3.0 Turbo · Kling Video O3 4K
-- 🎨 **Image** (96) — Seedream v5.0 Pro · Nano Banana 2 Lite · MAI-Image-2.5-Flash · MAI-Image-2.5
+- 🎨 **Image** (99) — Seedream v5.0 Pro · Nano Banana 2 Lite · MAI-Image-2.5-Flash · MAI-Image-2.5
 - 🧊 **3D** (5) — Seed3D 2.0 · Hunyuan 3D Rapid · Hunyuan 3D Pro
 - 💬 **LLM** (59) — Grok 4.5 · Kimi K3 · KAT Coder Pro V2.5 · KAT Coder Air V2.5
-- 🔊 **Audio (TTS · Music · ASR)** (14) — Seed Audio 1.0 · xAI TTS v1 · ElevenLabs v3 · Suno chirp-auk
+- 🔊 **Audio (TTS · Music · ASR)** (19) — Seed Audio 1.0 · xAI TTS v1 · ElevenLabs v3 · Gemini 3.1 Flash TTS
 
-- 📚 **Explore more** — [all 366 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+- 📚 **Explore more** — [all 374 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
 <!-- ATLAS-MODELS:END -->
 
 ## Contents
