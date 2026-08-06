@@ -36,6 +36,7 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - [Available Skills](#available-skills)
   - [atlas-cloud](#atlas-cloud)
   - [seedance-2-5-skill](#seedance-2-5-skill)
+  - [universal-video-prompt-skill](#universal-video-prompt-skill)
 - [Installation](#installation)
 - [Setup](#setup)
 - [What You Can Do](#what-you-can-do)
@@ -76,7 +77,17 @@ A model-specific sub-skill for controllable Seedance video, layered on top of `a
 - **Execution** — submits through Atlas Cloud (MCP, CLI or REST) and verifies model availability before a billable run
 - Every reference ships in English and Simplified Chinese; Chinese requests follow a dedicated Chinese workflow
 
-Prompt library for this model: [awesome-seedance-2.5-prompts-skills](https://github.com/AtlasCloudAI/awesome-seedance-2.5-prompts-skills)
+Works with [`universal-video-prompt-skill`](#universal-video-prompt-skill) when the same brief needs to run on more than one model. Prompt library for this model: [awesome-seedance-2.5-prompts-skills](https://github.com/AtlasCloudAI/awesome-seedance-2.5-prompts-skills)
+
+### universal-video-prompt-skill
+
+Model-agnostic companion to `seedance-2-5-skill`. It writes one prompt **spec** — scope, locks, staging, end states — separately from the dialect that expresses it, then compiles that spec for whichever video model you can actually call. Use it when:
+
+- The same brief has to run on several models, or the target model is not available yet and the work must proceed elsewhere
+- You are building a model-comparison matrix and need the prompts to differ only by dialect
+- A prompt must survive a model swap instead of being rewritten
+
+Each model carries a measured profile (reference syntax, limits, timing adherence, default-bias behaviour); the skill probes what it does not know, degrades the spec to what the model supports, and reports every degrade. English + Simplified Chinese references throughout.
 
 ## Installation
 
@@ -101,7 +112,10 @@ Copy `atlas-cloud/` to `~/.claude/skills/atlas-cloud/`, and any sub-skill under 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s atlas-cloud
 curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s seedance-2-5-skill
+curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s universal-video-prompt-skill
 ```
+
+`seedance-2-5-skill` references `universal-video-prompt-skill`, so install both if you want cross-model prompt specs.
 
 ## Setup
 
