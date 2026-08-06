@@ -34,6 +34,8 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - [Supported Models](#supported-models)
 - [Featured Recipes](#featured-recipes)
 - [Available Skills](#available-skills)
+  - [atlas-cloud](#atlas-cloud)
+  - [seedance-2-5-skill](#seedance-2-5-skill)
 - [Installation](#installation)
 - [Setup](#setup)
 - [What You Can Do](#what-you-can-do)
@@ -63,6 +65,19 @@ Quickly integrate Atlas Cloud API into your projects. This skill provides:
 - OpenAI SDK compatibility guide for LLM models
 - Error handling, retry strategy, and best practices
 
+### seedance-2-5-skill
+
+A model-specific sub-skill for controllable Seedance video, layered on top of `atlas-cloud`. Use it when a job needs shot planning rather than a single prompt:
+
+- **Route selection first** — text-to-video, storyboard-image-to-video, asset-reference-to-video, first-and-last-frame, or extending an existing clip
+- **Reference discipline** — how to assign people / product / scene / style / audio references so identity holds across shots
+- **Shot craft** — camera, lighting and composition vocabulary, transition patterns, long-video continuity, real-person handling
+- **Editing and extension** — rewriting part of an existing video, changing lighting or style, extending a short clip
+- **Execution** — submits through Atlas Cloud (MCP, CLI or REST) and verifies model availability before a billable run
+- Every reference ships in English and Simplified Chinese; Chinese requests follow a dedicated Chinese workflow
+
+Prompt library for this model: [awesome-seedance-2.5-prompts-skills](https://github.com/AtlasCloudAI/awesome-seedance-2.5-prompts-skills)
+
 ## Installation
 
 ### One-Line Install
@@ -79,7 +94,14 @@ curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/mai
 
 ### Manual
 
-Copy the `atlas-cloud/` directory to `~/.claude/skills/atlas-cloud/`.
+Copy `atlas-cloud/` to `~/.claude/skills/atlas-cloud/`, and any sub-skill under `skills/` to `~/.claude/skills/<name>/`.
+
+### Install one skill only
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s atlas-cloud
+curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s seedance-2-5-skill
+```
 
 ## Setup
 
