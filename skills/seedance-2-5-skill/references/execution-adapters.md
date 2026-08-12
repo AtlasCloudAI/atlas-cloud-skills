@@ -135,6 +135,13 @@ curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/cli/main/install.sh | 
 atlas auth login
 ```
 
+Run `atlas auth login` interactively. The adapter will not log in for you by
+passing an API key on the command line, because command-line arguments are
+readable by other processes on the host. If you must automate it on a
+single-user machine, set `ATLAS_CLI_ALLOW_ARGV_TOKEN=1` and accept that
+exposure; otherwise prefer `execution.adapter: "atlas-rest"`, which sends the
+key only in an HTTPS request header.
+
 Verify the selected model before generation:
 
 ```bash
