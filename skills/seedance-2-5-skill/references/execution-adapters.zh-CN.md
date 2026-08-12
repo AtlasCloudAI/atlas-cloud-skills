@@ -92,6 +92,11 @@ curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/cli/main/install.sh | 
 atlas auth login
 ```
 
+请交互式执行 `atlas auth login`。适配器不会替你用命令行参数传 API key 去登录，
+因为命令行参数可被本机其他进程读取。若必须在单用户机器上自动化，可设置
+`ATLAS_CLI_ALLOW_ARGV_TOKEN=1` 并接受该暴露；否则请优先使用
+`execution.adapter: "atlas-rest"`，它只在 HTTPS 请求头中发送 key。
+
 生成前核实模型：
 
 ```bash

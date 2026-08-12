@@ -74,6 +74,16 @@ export function createAtlasCliExecutor({ config, root, log = console.log }) {
   if (!atlasCliIsAuthenticated(command)) {
     const key = atlasApiKey(config);
     if (!key) throw new Error(`atlas-cli is not logged in and no Atlas API key is available. Run \`${command} auth login\`, or use execution.adapter: \"atlas-rest\".`);
+    // A key passed as a command-line argument is visible to every other process
+    // on the host (ps / procfs), so non-interactive login is opt-in only.
+    if (process.env.ATLAS_CLI_ALLOW_ARGV_TOKEN !== "1") {
+      throw new Error(
+        `atlas-cli is not logged in. Non-interactive login would pass the Atlas API key as a command-line argument, which other processes on this host can read. `
+        + `Pick one: (1) run \`${command} auth login\` once interactively, (2) set execution.adapter: \"atlas-rest\" to call the HTTPS API directly, `
+        + `or (3) set ATLAS_CLI_ALLOW_ARGV_TOKEN=1 to accept that exposure on a single-user machine.`
+      );
+    }
+    log("[executor] WARNING: ATLAS_CLI_ALLOW_ARGV_TOKEN=1 - the Atlas API key is passed via argv and is readable by other processes on this host");
     const login = spawnSync(command, ["auth", "login", "--token", key, "--json"], { encoding: "utf8", env: process.env });
     if (login.error || login.status !== 0) {
       const detail = (login.stderr || login.stdout || "").trim().slice(0, 300);
