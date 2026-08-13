@@ -24,9 +24,9 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - 🎨 **Image** (117) — Seedream v5.0 Pro · Qwen Image 3.0 · Reve 2.1 · Youchuan V8.2
 - 🧊 **3D** (7) — Seed3D 2.0 · Hunyuan 3D Rapid · Hunyuan 3D Pro · Tripo H3.1
 - 💬 **LLM** (62) — DeepSeek V4 Flash 0731 · Qwen3.8 Max · Kimi K3 · Grok 4.5
-- 🔊 **Audio (TTS · Music · ASR)** (11) — Seed Audio 1.0 · xAI TTS v1 · ElevenLabs v3 · Gemini 3.1 Flash TTS
+- 🔊 **Audio (TTS · Music · ASR)** (18) — Seed Audio 1.0 · xAI TTS v1 · ElevenLabs v3 · Suno chirp-v4-5-all
 
-- 📚 **Explore more** — [all 400 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+- 📚 **Explore more** — [all 407 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
 <!-- ATLAS-MODELS:END -->
 
 ## Contents
