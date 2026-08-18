@@ -44,7 +44,7 @@ across all five. Clean line-art-meets-paint style, plain background.
 
 - Drift in identity between frames? Re-paste the exact character-bible string every time, and prefer sequential generation over separate one-off calls — it holds consistency far better.
 - Nano Banana Pro multi-reference is a strong alternative when you already have one good portrait to anchor on.
-- Feed the finished sheet into Seedance 2 reference-to-video to animate the character into a multi-shot scene.
+- Feed the finished sheet into Seedance 2.5 reference-to-video to animate the character into a multi-shot scene.
 
 ## Related
 

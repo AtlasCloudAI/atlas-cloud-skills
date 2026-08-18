@@ -11,14 +11,14 @@ A single, gorgeous establishing shot generated straight from text — a sweeping
 ## Models used
 
 - 🎬 **Video** — Veo 3.1 text-to-video (resolve live; e.g. `google/veo3.1/text-to-video`), native audio
-- 🎬 **Video (alt)** — Sora 2 text-to-video (resolve live; e.g. `openai/sora-2/text-to-video`)
-- 🎬 **Video (drafts)** — Seedance 2 text-to-video `-fast` (resolve live; cheapest, for framing)
+- 🎬 **Video (alt)** — Kling v3.0 Pro text-to-video (resolve live; e.g. `kwaivgi/kling-v3.0-pro/text-to-video`)
+- 🎬 **Video (drafts)** — Seedance 2.0 Fast text-to-video (resolve live; cheapest, for framing)
 - 💬 **LLM** — Claude, to expand one line into a rich, camera-aware shot prompt
 
 ## Steps
 
 1. **Expand the line** — "Turn 'a lighthouse at dawn' into a detailed cinematic shot prompt with camera move, lens, light, and mood." → maps to `atlas_chat` with **Claude**.
-2. **Draft the framing** — run the expanded prompt cheaply first → maps to `atlas_generate_video` with **Seedance 2 t2v** (`-fast`).
+2. **Draft the framing** — run the expanded prompt cheaply first → maps to `atlas_generate_video` with **Seedance 2.5 t2v** (`seedance-2.0-fast`).
    > Tip: ask the agent to `atlas_search_docs` for the model first so it pulls live duration, resolution, and aspect-ratio params.
 3. **Final render** — re-run the keeper on **Veo 3.1 text-to-video** for fidelity *and* native audio (ambient sound baked in), or **Sora 2** for its motion/physics feel.
 4. **Grade & loop (optional)** — ask the agent for an ffmpeg color tweak or a clean loop point.

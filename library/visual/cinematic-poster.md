@@ -42,7 +42,7 @@ palette, moody key light. Title across the lower third in distressed sans-serif:
 
 - Title text looks off in Flux 2? Generate the art clean, then do a title-only pass with Nano Banana Pro or Ideogram V3 for sharp typography.
 - Want a series (teaser + final)? Keep the hero and palette fixed, vary tagline and crop.
-- Turn the poster into motion: feed it to a Kling 3 or Seedance 2 image-to-video step for a 5s animated teaser (see the motion/ recipes).
+- Turn the poster into motion: feed it to a Kling 3 or Seedance 2.5 image-to-video step for a 5s animated teaser (see the motion/ recipes).
 
 ## Related
 
