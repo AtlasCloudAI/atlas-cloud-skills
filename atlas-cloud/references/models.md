@@ -46,29 +46,33 @@
 | `z-image/turbo` | Z-Image Turbo | $0.01/image |
 | `bytedance/seedream-v4.5` | Seedream v4.5 | $0.036/image |
 
-## Video Models (priced per generation)
+## Video Models (priced per second of output; figures are the 480p entry price — 720p/1080p cost more)
 
 | Model ID | Name | Price |
 |----------|------|-------|
-| `bytedance/seedance-2.0/text-to-video` | **Seedance 2.0 Text-to-Video** (native audio, 4-15s, up to 1080p) | $0.127/gen |
-| `bytedance/seedance-2.0/image-to-video` | **Seedance 2.0 Image-to-Video** (first+last frame, native audio) | $0.127/gen |
-| `bytedance/seedance-2.0/reference-to-video` | **Seedance 2.0 Reference-to-Video** (multimodal: up to 9 images + 3 videos + 1 audio) | $0.127/gen |
-| `bytedance/seedance-2.0-fast/text-to-video` | Seedance 2.0 Fast Text-to-Video | $0.101/gen |
-| `bytedance/seedance-2.0-fast/image-to-video` | Seedance 2.0 Fast Image-to-Video | $0.101/gen |
-| `bytedance/seedance-2.0-fast/reference-to-video` | Seedance 2.0 Fast Reference-to-Video | $0.101/gen |
-| `kwaivgi/kling-v3.0-std/text-to-video` | Kling v3.0 Std Text-to-Video | $0.153/gen |
-| `kwaivgi/kling-v3.0-std/image-to-video` | Kling v3.0 Std Image-to-Video | $0.153/gen |
-| `kwaivgi/kling-v3.0-pro/text-to-video` | Kling v3.0 Pro Text-to-Video | $0.204/gen |
-| `kwaivgi/kling-v3.0-pro/image-to-video` | Kling v3.0 Pro Image-to-Video | $0.204/gen |
-| `vidu/q3/text-to-video` | Vidu Q3 Text-to-Video | $0.06/gen |
-| `vidu/q3/image-to-video` | Vidu Q3 Image-to-Video | $0.06/gen |
-| `bytedance/seedance-v1.5-pro/text-to-video` | Seedance v1.5 Pro Text-to-Video | $0.222/gen |
-| `bytedance/seedance-v1.5-pro/image-to-video` | Seedance v1.5 Pro Image-to-Video | $0.222/gen |
-| `bytedance/seedance-v1.5-pro/image-to-video-fast` | Seedance v1.5 Pro I2V Fast | $0.018/gen |
-| `alibaba/wan-2.6/image-to-video-flash` | Wan-2.6 Image-to-Video Flash | $0.018/gen |
-| `alibaba/wan-2.6/image-to-video` | Wan-2.6 Image-to-Video | $0.07/gen |
-| `kwaivgi/kling-v2.6-pro/avatar` | Kling v2.6 Pro Avatar | $0.095/gen |
-| `kwaivgi/kling-v2.6-std/avatar` | Kling v2.6 Std Avatar | $0.048/gen |
+| `bytedance/seedance-2.5/text-to-video` | **Seedance 2.5 Text-to-Video** (native audio, 4-30s, native up to 1080p / 4K via SR) | $0.134/s |
+| `bytedance/seedance-2.5/image-to-video` | **Seedance 2.5 Image-to-Video** (first+last frame, native audio) | $0.134/s |
+| `bytedance/seedance-2.5/reference-to-video` | **Seedance 2.5 Reference-to-Video** (multimodal: up to 30 images + 10 videos + 10 audio) | $0.134/s |
+| `bytedance/seedance-2.0/text-to-video` | Seedance 2.0 Text-to-Video (native audio, 4-15s) | $0.112/s |
+| `bytedance/seedance-2.0-fast/text-to-video` | Seedance 2.0 Fast Text-to-Video | $0.072/s |
+| `bytedance/seedance-2.0-fast/image-to-video` | Seedance 2.0 Fast Image-to-Video | $0.072/s |
+| `bytedance/seedance-2.0-fast/reference-to-video` | Seedance 2.0 Fast Reference-to-Video | $0.072/s |
+| `bytedance/seedance-2.0-mini/text-to-video` | Seedance 2.0 Mini Text-to-Video (cheapest Seedance tier) | $0.039/s |
+| `kwaivgi/kling-v3.0-std/text-to-video` | Kling v3.0 Std Text-to-Video | $0.071/s |
+| `kwaivgi/kling-v3.0-std/image-to-video` | Kling v3.0 Std Image-to-Video | $0.071/s |
+| `kwaivgi/kling-v3.0-pro/text-to-video` | Kling v3.0 Pro Text-to-Video | $0.095/s |
+| `kwaivgi/kling-v3.0-pro/image-to-video` | Kling v3.0 Pro Image-to-Video | $0.095/s |
+| `kwaivgi/kling-video-o3-pro/text-to-video` | Kling Video O3 Pro Text-to-Video | $0.095/s |
+| `vidu/q3-pro/text-to-video` | Vidu Q3 Pro Text-to-Video | $0.042/s |
+| `vidu/q3-pro/image-to-video` | Vidu Q3 Pro Image-to-Video | $0.042/s |
+| `alibaba/wan-2.7/image-to-video` | Wan-2.7 Image-to-Video (newest Wan on Atlas Cloud) | $0.1/s |
+| `bytedance/seedance-v1.5-pro/text-to-video` | Seedance v1.5 Pro Text-to-Video | $0.047/s |
+| `bytedance/seedance-v1.5-pro/image-to-video` | Seedance v1.5 Pro Image-to-Video | $0.047/s |
+| `bytedance/seedance-v1.5-pro/image-to-video-fast` | Seedance v1.5 Pro I2V Fast | $0.018/s |
+| `alibaba/wan-2.6/image-to-video-flash` | Wan-2.6 Image-to-Video Flash | $0.018/s |
+| `kwaivgi/kling-v2.6-pro/avatar` | Kling v2.6 Pro Avatar | $0.095/s |
+| `kwaivgi/kling-v2.6-std/avatar` | Kling v2.6 Std Avatar | $0.048/s |
+| `kwaivgi/kling-v3.0-pro/motion-control` | Kling v3.0 Pro Motion Control | $0.143/s |
 
 ## LLM Models (priced per million tokens)
 

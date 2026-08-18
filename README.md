@@ -8,9 +8,11 @@
   <a href="https://github.com/AtlasCloudAI/atlas-cloud-skills"><img src="https://img.shields.io/badge/install-npx%20skills%20add-28CF8D?style=flat&colorA=18181B&colorB=28CF8D" alt="npx skills add"></a>
 </p>
 
-> 🎬 **Seedance 2.0 is now live on Atlas Cloud!** ByteDance's flagship video model — native audio-video joint generation, up to 15s cinematic output, up to 1440P, multimodal reference (up to 9 images + 3 videos + 3 audio clips), and director-level camera control. Available now: [Text-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Image-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/image-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Reference-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.0/reference-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Fast variants](https://www.atlascloud.ai/models/bytedance/seedance-2.0-fast/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) from **$0.076/s**.
+> 🎬 **Seedance 2.5 is now live on Atlas Cloud!** ByteDance's newest flagship video model — native audio-video joint generation, up to **30s in a single generation**, native 480p/720p/1080p (up to 4K via built-in super-resolution), aspect ratios from 21:9 to 9:16, and multimodal reference of up to 30 images + 10 videos + 10 audio clips. Available now: [Text-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.5/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Image-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.5/image-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) · [Reference-to-Video](https://www.atlascloud.ai/models/bytedance/seedance-2.5/reference-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) from **$0.134/s**. Cheaper tiers: [Seedance 2.0 Fast](https://www.atlascloud.ai/models/bytedance/seedance-2.0-fast/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) from **$0.072/s** · [Seedance 2.0 Mini](https://www.atlascloud.ai/models/bytedance/seedance-2.0-mini/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) from **$0.039/s**.
 >
 > 🔓 **Need the full-power build?** The **unrestricted / full-capability pipeline** — fewer guardrails, broader subject range, max-fidelity output — is available through [Atlas Cloud Workflow](https://www.atlascloud.ai/console/workflow?utm_source=github&utm_campaign=atlas-cloud-skills). Hook it straight into your skill via the same API key.
+>
+> 🔜 **Coming soon** — Kling 4.0 and Wan 3.0 are not on Atlas Cloud yet. Newest available today: [Kling 3.0 / Video O3](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills) and [Wan 2.7](https://www.atlascloud.ai/models/alibaba/wan-2.7/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills). We add new versions as soon as the vendors ship them — watch this repo for the update.
 
 Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas-cloud-skills)'s 300+ image / video / LLM models inside Claude Code, Codex, Gemini CLI, and other AI coding agents. Generate images, videos & chat via curated Skills.
 
@@ -133,7 +135,7 @@ See [`.env.example`](.env.example) for a ready-to-copy template.
 | Capability | Endpoint | Example Models |
 |------------|----------|----------------|
 | **Image Generation** | `POST /api/v1/model/generateImage` | Nano Banana 2, Seedream v5.0, Z-Image |
-| **Video Generation** | `POST /api/v1/model/generateVideo` | Seedance 2.0, Kling v3.0, Vidu Q3 |
+| **Video Generation** | `POST /api/v1/model/generateVideo` | Seedance 2.5, Kling v3.0 / Video O3, Wan 2.7 |
 | **Audio — TTS & Music** | `POST /api/v1/model/generateAudio` | Seed Audio 1.0, Suno Chirp v5, MiniMax Music |
 | **Speech-to-Text (ASR)** | `POST /api/v1/model/generateAudio` | Seed ASR 2.0, xAI STT |
 | **3D Generation** | `POST /api/v1/model/generateImage` | Seed3D 2.0, Hunyuan 3D (image/text-to-3D) |

@@ -43,7 +43,7 @@ strongest year starts today." Clean, friendly, App-Store-feature aesthetic, soft
 
 - UI text is the hard part — GPT Image 2 (or Ideogram V3) keeps button labels and headlines legible; Flux 2 wins on photoreal device/scene but can muddy small text, so let GPT Image 2 own the copy.
 - Need dark mode + light mode? Reuse the prompt, just flip the theme line.
-- Want the hero animated for the deck? Take it into Kling 3 / Seedance 2 image-to-video for a subtle 5s loop.
+- Want the hero animated for the deck? Take it into Kling 3 / Seedance 2.5 image-to-video for a subtle 5s loop.
 
 ## Related
 

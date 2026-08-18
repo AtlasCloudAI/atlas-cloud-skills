@@ -231,12 +231,12 @@ Request body:
 
 Common video model parameters:
 - `prompt` (required for T2V): Video description
-- `image` / `image_url`: Input image (for image-to-video models — Seedance 2.0 uses `image`, Kling uses `image_url`)
-- `duration`: Video duration in seconds (Seedance 2.0 supports 4-15, or `-1` for auto)
-- `resolution`: `"480p"` / `"720p"` / `"1080p"` (Seedance 2.0)
+- `image` / `image_url`: Input image (for image-to-video models — Seedance 2.5 uses `image`, Kling uses `image_url`)
+- `duration`: Video duration in seconds (Seedance 2.5 supports 4-30, Seedance 2.0 supports 4-15, or `-1` for auto)
+- `resolution`: `"480p"` / `"720p"` / `"1080p"` native; Seedance 2.5 also takes `-sr` / `-esr` upscale tiers up to `"4k-sr"`
 - `aspect_ratio` / `ratio`: Aspect ratio (e.g., `"16:9"`, `"9:16"`, `"1:1"`, `"21:9"`, `"adaptive"`)
-- `generate_audio`: Seedance 2.0 generates synchronized native audio (voice/SFX/BGM) jointly with video. Default `true`
-- `web_search`: Seedance 2.0 T2V only — enable to ground generation in real-world references. Default `false`
+- `generate_audio`: Seedance 2.5 / 2.0 generate synchronized native audio (voice/SFX/BGM) jointly with video. Default `true`
+- `web_search`: Seedance T2V only — enable to ground generation in real-world references. Default `false`
 
 > Different video models accept different parameters. Always call `atlas_get_model_info` or fetch the schema first for unfamiliar models.
 
@@ -246,7 +246,7 @@ Poll results using the same prediction endpoint. Video generation typically take
 
 For workloads that need the **unrestricted / full-capability build** — looser guardrails, broader subject coverage, and maximum-fidelity output that goes beyond the standard API's content policy — route the job through [Atlas Cloud Workflow](https://www.atlascloud.ai/console/workflow). It's the same account, same API key, same polling contract; just a different submission entry point designed for advanced production use.
 
-Use this when the default Seedance 2.0 endpoint rejects a legitimate creative prompt or clamps stylistic range. Point the user to Atlas Cloud Workflow if they hit refusals on non-violating prompts.
+Use this when the default Seedance 2.5 endpoint rejects a legitimate creative prompt or clamps stylistic range. Point the user to Atlas Cloud Workflow if they hit refusals on non-violating prompts.
 
 ## Upload Media
 
@@ -421,22 +421,32 @@ The tables below are **illustrative only**. They go stale. Treat them as hints a
 | `alibaba/qwen-image/edit-plus-20251215` | Qwen-Image Edit Plus | $0.021/image |
 | `z-image/turbo` | Z-Image Turbo | $0.01/image |
 
-### Video Models (priced per generation)
+### Video Models (priced per second of output; figures are the 480p entry price — 720p/1080p cost more)
 | Model ID | Name | Price |
 |----------|------|-------|
-| `bytedance/seedance-2.0/text-to-video` | **Seedance 2.0 Text-to-Video** (native audio, up to 15s, 1080p) | $0.127/gen |
-| `bytedance/seedance-2.0/image-to-video` | **Seedance 2.0 Image-to-Video** (first+last frame, native audio) | $0.127/gen |
-| `bytedance/seedance-2.0/reference-to-video` | **Seedance 2.0 Reference-to-Video** (multimodal: up to 9 images + 3 videos + 1 audio) | $0.127/gen |
-| `bytedance/seedance-2.0-fast/text-to-video` | Seedance 2.0 Fast Text-to-Video | $0.101/gen |
-| `bytedance/seedance-2.0-fast/image-to-video` | Seedance 2.0 Fast Image-to-Video | $0.101/gen |
-| `bytedance/seedance-2.0-fast/reference-to-video` | Seedance 2.0 Fast Reference-to-Video | $0.101/gen |
-| `kwaivgi/kling-v3.0-std/text-to-video` | Kling v3.0 Std Text-to-Video | $0.153/gen |
-| `kwaivgi/kling-v3.0-std/image-to-video` | Kling v3.0 Std Image-to-Video | $0.153/gen |
-| `kwaivgi/kling-v3.0-pro/text-to-video` | Kling v3.0 Pro Text-to-Video | $0.204/gen |
-| `kwaivgi/kling-v3.0-pro/image-to-video` | Kling v3.0 Pro Image-to-Video | $0.204/gen |
-| `vidu/q3/text-to-video` | Vidu Q3 Text-to-Video | $0.06/gen |
-| `vidu/q3/image-to-video` | Vidu Q3 Image-to-Video | $0.06/gen |
-| `alibaba/wan-2.6/image-to-video` | Wan-2.6 Image-to-Video | $0.07/gen |
+| `bytedance/seedance-2.5/text-to-video` | **Seedance 2.5 Text-to-Video** (native audio, 4-30s, native up to 1080p / 4K via SR) | $0.134/s |
+| `bytedance/seedance-2.5/image-to-video` | **Seedance 2.5 Image-to-Video** (first+last frame, native audio) | $0.134/s |
+| `bytedance/seedance-2.5/reference-to-video` | **Seedance 2.5 Reference-to-Video** (multimodal: up to 30 images + 10 videos + 10 audio) | $0.134/s |
+| `bytedance/seedance-2.0/text-to-video` | Seedance 2.0 Text-to-Video (native audio, 4-15s) | $0.112/s |
+| `bytedance/seedance-2.0-fast/text-to-video` | Seedance 2.0 Fast Text-to-Video | $0.072/s |
+| `bytedance/seedance-2.0-fast/image-to-video` | Seedance 2.0 Fast Image-to-Video | $0.072/s |
+| `bytedance/seedance-2.0-fast/reference-to-video` | Seedance 2.0 Fast Reference-to-Video | $0.072/s |
+| `bytedance/seedance-2.0-mini/text-to-video` | Seedance 2.0 Mini Text-to-Video (cheapest Seedance tier) | $0.039/s |
+| `kwaivgi/kling-v3.0-std/text-to-video` | Kling v3.0 Std Text-to-Video | $0.071/s |
+| `kwaivgi/kling-v3.0-std/image-to-video` | Kling v3.0 Std Image-to-Video | $0.071/s |
+| `kwaivgi/kling-v3.0-pro/text-to-video` | Kling v3.0 Pro Text-to-Video | $0.095/s |
+| `kwaivgi/kling-v3.0-pro/image-to-video` | Kling v3.0 Pro Image-to-Video | $0.095/s |
+| `kwaivgi/kling-video-o3-pro/text-to-video` | Kling Video O3 Pro Text-to-Video | $0.095/s |
+| `vidu/q3-pro/text-to-video` | Vidu Q3 Pro Text-to-Video | $0.042/s |
+| `vidu/q3-pro/image-to-video` | Vidu Q3 Pro Image-to-Video | $0.042/s |
+| `alibaba/wan-2.7/image-to-video` | Wan-2.7 Image-to-Video (newest Wan on Atlas Cloud) | $0.1/s |
+| `bytedance/seedance-v1.5-pro/text-to-video` | Seedance v1.5 Pro Text-to-Video | $0.047/s |
+| `bytedance/seedance-v1.5-pro/image-to-video` | Seedance v1.5 Pro Image-to-Video | $0.047/s |
+| `bytedance/seedance-v1.5-pro/image-to-video-fast` | Seedance v1.5 Pro I2V Fast | $0.018/s |
+| `alibaba/wan-2.6/image-to-video-flash` | Wan-2.6 Image-to-Video Flash | $0.018/s |
+| `kwaivgi/kling-v2.6-pro/avatar` | Kling v2.6 Pro Avatar | $0.095/s |
+| `kwaivgi/kling-v2.6-std/avatar` | Kling v2.6 Std Avatar | $0.048/s |
+| `kwaivgi/kling-v3.0-pro/motion-control` | Kling v3.0 Pro Motion Control | $0.143/s |
 
 ### LLM Models (priced per million tokens)
 | Model ID | Name | Input | Output |
