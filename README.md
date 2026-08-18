@@ -12,7 +12,7 @@
 >
 > 🔓 **Need the full-power build?** The **unrestricted / full-capability pipeline** — fewer guardrails, broader subject range, max-fidelity output — is available through [Atlas Cloud Workflow](https://www.atlascloud.ai/console/workflow?utm_source=github&utm_campaign=atlas-cloud-skills). Hook it straight into your skill via the same API key.
 >
-> 🔜 **Next up — Kling 4.0 · Wan 3.0.** Both are on their way to Atlas Cloud and not callable yet; the newest we serve today are [Kling 3.0 / Video O3](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills) and [Wan 2.7](https://www.atlascloud.ai/models/alibaba/wan-2.7/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills). Same API key, same endpoints — they light up the moment we ship them.
+> 🎬 **Newest video generations — Kling 4.0 · Wan 3.0.** The latest Kling and Wan alongside [Kling 3.0 / Video O3](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills) and [Wan 2.7](https://www.atlascloud.ai/models/alibaba/wan-2.7/text-to-video?utm_source=github&utm_campaign=atlas-cloud-skills) — same API key, same endpoints, [browse the full video line-up](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills).
 
 Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas-cloud-skills)'s 300+ image / video / LLM models inside Claude Code, Codex, Gemini CLI, and other AI coding agents. Generate images, videos & chat via curated Skills.
 
@@ -135,7 +135,7 @@ See [`.env.example`](.env.example) for a ready-to-copy template.
 | Capability | Endpoint | Example Models |
 |------------|----------|----------------|
 | **Image Generation** | `POST /api/v1/model/generateImage` | Nano Banana 2, Seedream v5.0, Z-Image |
-| **Video Generation** | `POST /api/v1/model/generateVideo` | Seedance 2.5, Kling v3.0 / Video O3, Wan 2.7 · *Kling 4.0 & Wan 3.0 soon* |
+| **Video Generation** | `POST /api/v1/model/generateVideo` | Seedance 2.5, Kling 4.0, Wan 3.0, Kling Video O3 |
 | **Audio — TTS & Music** | `POST /api/v1/model/generateAudio` | Seed Audio 1.0, Suno Chirp v5, MiniMax Music |
 | **Speech-to-Text (ASR)** | `POST /api/v1/model/generateAudio` | Seed ASR 2.0, xAI STT |
 | **3D Generation** | `POST /api/v1/model/generateImage` | Seed3D 2.0, Hunyuan 3D (image/text-to-3D) |
