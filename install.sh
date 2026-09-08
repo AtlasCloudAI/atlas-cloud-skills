@@ -4,7 +4,6 @@ set -e
 # Installs the Atlas Cloud skill and its model-specific sub-skills.
 #   curl -fsSL .../install.sh | sh              # everything
 #   curl -fsSL .../install.sh | sh -s atlas-cloud   # main skill only
-#   curl -fsSL .../install.sh | sh -s atlas-3d-model-skill
 #   curl -fsSL .../install.sh | sh -s seedance-2-5-skill
 
 REPO_URL="https://github.com/AtlasCloudAI/atlas-cloud-skills"

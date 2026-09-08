@@ -37,7 +37,6 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - [Featured Recipes](#featured-recipes)
 - [Available Skills](#available-skills)
   - [atlas-cloud](#atlas-cloud)
-  - [atlas-3d-model-skill](#atlas-3d-model-skill)
   - [seedance-2-5-skill](#seedance-2-5-skill)
   - [universal-video-prompt-skill](#universal-video-prompt-skill)
 - [Installation](#installation)
@@ -68,17 +67,6 @@ Quickly integrate Atlas Cloud API into your projects. This skill provides:
 - Popular model IDs with pricing info
 - OpenAI SDK compatibility guide for LLM models
 - Error handling, retry strategy, and best practices
-
-### atlas-3d-model-skill
-
-An end-to-end Atlas Cloud 3D asset generator for text and image inputs:
-
-- **Automatic routing** — text requests go to a live text-to-3D model; object images go to Seed3D image-to-3D
-- **Live contract checks** — verifies `display_console`, fetches the current schema, validates enums, and reads the current price before submission
-- **Safe paid execution** — never retries the billable generation `POST` and preserves the prediction ID for resume
-- **Finished local asset** — uploads local images, polls, downloads, safely extracts Seed3D ZIPs, and validates GLB/OBJ/USDZ/FBX/STL/MP4 output
-- **Agent-ready evidence** — writes `job.json` and `generation.json` with recovery and acceptance details, without storing the API key
-- English and Simplified Chinese workflows are included
 
 ### seedance-2-5-skill
 
@@ -125,7 +113,6 @@ Copy `atlas-cloud/` to `~/.claude/skills/atlas-cloud/`, and any sub-skill under 
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s atlas-cloud
-curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s atlas-3d-model-skill
 curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s seedance-2-5-skill
 curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s universal-video-prompt-skill
 ```
