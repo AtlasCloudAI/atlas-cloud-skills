@@ -3,20 +3,12 @@ set -e
 
 # Installs the Atlas Cloud skill and its model-specific sub-skills.
 #   curl -fsSL .../install.sh | sh              # everything
-#   curl -fsSL .../install.sh | sh -s media-generation   # main skill only
-#   curl -fsSL .../install.sh | sh -s seedance-skill
-#
-# The old names atlas-cloud / seedance-2-5-skill still work; they map to the new ones.
+#   curl -fsSL .../install.sh | sh -s atlas-cloud   # main skill only
+#   curl -fsSL .../install.sh | sh -s seedance-2-5-skill
 
 REPO_URL="https://github.com/AtlasCloudAI/atlas-cloud-skills"
 SKILLS_ROOT="$HOME/.claude/skills"
 WANT="${1:-all}"
-
-# Renamed in 0.5.0. Keep the old names working so existing notes and docs do not break.
-case "$WANT" in
-  atlas-cloud)        WANT="media-generation" ;;
-  seedance-2-5-skill) WANT="seedance-skill" ;;
-esac
 
 if ! command -v git &> /dev/null; then
   echo "Error: git is required to install these skills."
@@ -37,8 +29,8 @@ install_one() {
 
 echo "Installing Atlas Cloud skills for Claude Code..."
 
-if [ "$WANT" = "all" ] || [ "$WANT" = "media-generation" ]; then
-  install_one "media-generation" "$TMP_DIR/media-generation"
+if [ "$WANT" = "all" ] || [ "$WANT" = "atlas-cloud" ]; then
+  install_one "atlas-cloud" "$TMP_DIR/atlas-cloud"
 fi
 
 if [ -d "$TMP_DIR/skills" ]; then

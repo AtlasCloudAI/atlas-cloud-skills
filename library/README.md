@@ -1,6 +1,6 @@
 # Atlas Cloud Skills — Recipe Library
 
-> Creative playbooks: **input → finished output**, the models to use, and the exact steps. Drive any of them with the [`media-generation`](../media-generation/SKILL.md) skill inside Claude Code, Codex, Gemini CLI, or any skill-compatible agent.
+> Creative playbooks: **input → finished output**, the models to use, and the exact steps. Drive any of them with the [`atlas-cloud`](../atlas-cloud/SKILL.md) skill inside Claude Code, Codex, Gemini CLI, or any skill-compatible agent.
 
 Each recipe names the models, the step sequence, and ready-to-paste prompt starters. Model IDs are always resolved live (via `atlas_search_docs` / `atlas_quick_generate`) so nothing goes stale.
 

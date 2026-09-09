@@ -1,5 +1,5 @@
 ---
-name: seedance-skill
+name: seedance-2-5-skill
 description: >-
   Plan and generate controllable Seedance video using Seedream 5.0 Pro
   storyboards and Seedance 2.0 today, with a Seedance 2.5 route when available.

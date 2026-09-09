@@ -36,8 +36,8 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - [Supported Models](#supported-models)
 - [Featured Recipes](#featured-recipes)
 - [Available Skills](#available-skills)
-  - [media-generation](#media-generation)
-  - [seedance-skill](#seedance-skill)
+  - [atlas-cloud](#atlas-cloud)
+  - [seedance-2-5-skill](#seedance-2-5-skill)
   - [universal-video-prompt-skill](#universal-video-prompt-skill)
 - [Installation](#installation)
 - [Setup](#setup)
@@ -57,7 +57,7 @@ Don't start from a blank prompt — start from a workflow. Three to try first:
 
 ## Available Skills
 
-### media-generation
+### atlas-cloud
 
 Quickly integrate Atlas Cloud API into your projects. This skill provides:
 
@@ -68,9 +68,9 @@ Quickly integrate Atlas Cloud API into your projects. This skill provides:
 - OpenAI SDK compatibility guide for LLM models
 - Error handling, retry strategy, and best practices
 
-### seedance-skill
+### seedance-2-5-skill
 
-A model-specific sub-skill for controllable Seedance video, layered on top of `media-generation`. Use it when a job needs shot planning rather than a single prompt:
+A model-specific sub-skill for controllable Seedance video, layered on top of `atlas-cloud`. Use it when a job needs shot planning rather than a single prompt:
 
 - **Route selection first** — text-to-video, storyboard-image-to-video, asset-reference-to-video, first-and-last-frame, or extending an existing clip
 - **Reference discipline** — how to assign people / product / scene / style / audio references so identity holds across shots
@@ -83,7 +83,7 @@ Works with [`universal-video-prompt-skill`](#universal-video-prompt-skill) when 
 
 ### universal-video-prompt-skill
 
-Model-agnostic companion to `seedance-skill`. It writes one prompt **spec** — scope, locks, staging, end states — separately from the dialect that expresses it, then compiles that spec for whichever video model you can actually call. Use it when:
+Model-agnostic companion to `seedance-2-5-skill`. It writes one prompt **spec** — scope, locks, staging, end states — separately from the dialect that expresses it, then compiles that spec for whichever video model you can actually call. Use it when:
 
 - The same brief has to run on several models, or the target model is not available yet and the work must proceed elsewhere
 - You are building a model-comparison matrix and need the prompts to differ only by dialect
@@ -112,12 +112,12 @@ Copy `atlas-cloud/` to `~/.claude/skills/atlas-cloud/`, and any sub-skill under 
 ### Install one skill only
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s media-generation
-curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s seedance-skill
+curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s atlas-cloud
+curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s seedance-2-5-skill
 curl -fsSL https://raw.githubusercontent.com/AtlasCloudAI/atlas-cloud-skills/main/install.sh | sh -s universal-video-prompt-skill
 ```
 
-`seedance-skill` references `universal-video-prompt-skill`, so install both if you want cross-model prompt specs.
+`seedance-2-5-skill` references `universal-video-prompt-skill`, so install both if you want cross-model prompt specs.
 
 ## Setup
 
