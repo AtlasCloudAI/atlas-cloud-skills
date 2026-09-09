@@ -2,11 +2,19 @@
   "name": "atlas-cloud",
   "plugins": [
     {
-      "name": "atlascloud-ai-media",
-      "source": { "source": "local", "path": "./plugins/atlascloud-ai-media" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "name": "atlas-cloud",
+      "source": {
+        "source": "local",
+        "path": "./plugins/atlas-cloud"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
       "category": "Productivity",
-      "interface": { "displayName": "Atlas Cloud" }
+      "interface": {
+        "displayName": "Atlas Cloud"
+      }
     }
   ]
 }

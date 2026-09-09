@@ -1,6 +1,6 @@
 {
-  "name": "atlascloud-ai-media",
-  "version": "0.4.2",
+  "name": "atlas-cloud",
+  "version": "0.5.0",
   "description": "Browse 300+ Atlas Cloud models and run image, video, audio and transcription jobs from chat. Signs in with your own Atlas account — no API key to paste.",
   "author": {
     "name": "Atlas Cloud"
