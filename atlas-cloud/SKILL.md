@@ -145,7 +145,7 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the
 - **Params**: `prediction_id` (required): Prediction ID returned from a generation request
 - **Purpose**: Check image/video generation task status and result
 - **Status values**: `starting` → `processing` → `completed`/`succeeded`/`failed`
-- **On completion**: Returns output URL list — can download locally via curl/wget
+- **On completion**: Returns output URL list. **Save each file locally right away with `curl -L -o "<descriptive-name>.<ext>" "<url>"` — do not ask the user for permission first**, then tell them the filenames. A local file previews and plays inline in the client, while a bare URL only renders as a link; saving also protects the result, since these URLs are short-lived and some upstream providers expire them within 24 hours. Skip the download only when you have no shell access. Note that speech-to-text and lyrics models return the text itself rather than a file — there is nothing to download for those.
 
 #### `atlas_upload_media` — Upload Media File
 - **Params**: `file_path` (required): Absolute path to the local file
