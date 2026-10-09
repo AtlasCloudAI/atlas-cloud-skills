@@ -242,3 +242,30 @@ while true; do
   fi
 done
 ```
+
+## From the hosted MCP server (WorkBuddy / Codex): `atlas_get_upload_url`
+
+The hosted server cannot read files on your machine, and in that setup there is no
+API key — you are authenticated by OAuth. So instead of the endpoints above, use the
+MCP tool `atlas_get_upload_url`:
+
+1. Call `atlas_get_upload_url` (optionally with `filename_hint`). It returns
+   `upload_url`, `expires_at`, `max_bytes` and a ready-to-run `curl_example`.
+2. POST the raw bytes, file name (with extension) in the `X-Atlas-Filename` header:
+
+   ```bash
+   curl -sS -X POST "<upload_url>" \
+     -H "Content-Type: application/octet-stream" \
+     -H "X-Atlas-Filename: product.jpg" \
+     --data-binary @"/path/to/product.jpg"
+   ```
+
+3. The JSON response has `url`. Pass it as `image_url` (or the audio URL parameter)
+   to `atlas_generate_image`, `atlas_generate_video` or `atlas_quick_generate`.
+
+One `upload_url` serves several files until it expires (about 10 minutes). Uploads are
+free; nothing is billed until a generation is submitted. Files over `max_bytes` (32 MB by
+default) are rejected with HTTP 413 — host those elsewhere and pass the public link. If
+the tool is missing from your tool list, the server you are connected to predates it:
+fall back to a public URL.
+
