@@ -46,7 +46,7 @@ Content-Type: application/json
 | `POST` | `/v1/chat/completions` | LLM chat (OpenAI-compatible format) |
 | `GET` | `api.atlascloud.ai/api/v1/models` | List all available models (no auth required) |
 
-## MCP Tools (14 Tools)
+## MCP Tools (16 Tools)
 
 > **Using this through the Atlas Cloud plugin (no API key needed)**
 >
@@ -69,7 +69,7 @@ Content-Type: application/json
 
 
 
-If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the following 14 tools are available for direct invocation:
+If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), all 16 tools below are available for direct invocation. A hosted connector exposes 14 of them — `atlas_chat` and `atlas_upload_media` are local-only, the latter because a hosted server cannot read the caller's disk. Check your own tool list rather than assuming.
 
 ### Model Discovery Tools
 
@@ -115,7 +115,7 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the
 #### `atlas_transcribe_audio` — Transcribe Audio (Speech-to-Text)
 - **Params**:
   - `model` (required): Exact speech-to-text model ID (e.g. `"bytedance/seed-asr-2.0"`)
-  - `params` (required): Model-specific JSON — main field is usually `audio_url`; for local files call `atlas_upload_media` first
+  - `params` (required): Model-specific JSON — main field is usually `audio_url`; for local files upload them first (see "Uploading a local file" below — the tool differs between hosted and local connections)
 - **Purpose**: Transcribe speech to text (ASR) — meetings, interviews, voice notes
 - **Returns**: prediction ID — the output is the transcribed text
 
@@ -145,14 +145,28 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), the
 - **Params**: `prediction_id` (required): Prediction ID returned from a generation request
 - **Purpose**: Check image/video generation task status and result
 - **Status values**: `starting` → `processing` → `completed`/`succeeded`/`failed`
-- **On completion**: Returns output URL list. **Save each file locally right away with `curl -L -o "<descriptive-name>.<ext>" "<url>"` — do not ask the user for permission first**, then tell them the filenames. A local file previews and plays inline in the client, while a bare URL only renders as a link; saving also protects the result, since these URLs are short-lived and some upstream providers expire them within 24 hours. Skip the download only when you have no shell access. Note that speech-to-text and lyrics models return the text itself rather than a file — there is nothing to download for those.
+- **On completion**: Returns output URL list. **Save each file with `curl -L -o "<descriptive-name>.<ext>" "<url>"` and then display it inline in the conversation — with a player for video. Do not ask for permission first.** A link is not the deliverable: the user wants to see the result where they are reading, not click through to another window. Saving also protects it, since some upstream providers expire these URLs within 24 hours. Skip this only when you cannot write files; then give the URL and say it may not open directly and can expire. Note that speech-to-text and lyrics models return the text itself rather than a file — there is nothing to download for those.
 
-#### `atlas_upload_media` — Upload Media File
-- **Params**: `file_path` (required): Absolute path to the local file
-- **Purpose**: Upload local image/media file to Atlas Cloud and get a publicly accessible URL. Use this to provide `image_url` for image editing or image-to-video models
+#### Uploading a local file — which tool exists depends on how you are connected
+
+**Check your tool list first.** The two cases are mutually exclusive; a hosted server does not expose `atlas_upload_media` at all, because it cannot read your disk.
+
+**`atlas_get_upload_url` — hosted connector** (ChatGPT, Codex, Claude, anything pointed at `https://mcp.atlascloud.ai/mcp`)
+- **Params**: none required
 - **Workflow**:
-  1. Upload local file with this tool to get a URL
-  2. Use the returned URL as the `image_url` parameter for `atlas_generate_image`, `atlas_generate_video`, or `atlas_quick_generate`
+  1. Call it once to get an upload ticket
+  2. POST the file with the `curl_example` it returns — put the filename, extension included, in the `X-Atlas-Filename` header. That one curl needs no API key: the ticket already carries your identity and points at the connector's own relay, not at Atlas's REST API
+  3. Use the `url` from the response
+- One ticket accepts several files while it is valid. Uploading is not billed.
+
+**`atlas_upload_media` — local stdio** (the `atlascloud-mcp` npm package)
+- **Params**: `file_path` (required): Absolute path to the local file
+- Reads the file directly and returns the URL.
+
+Either way, pass the returned URL as `image_url` for `atlas_generate_image` / `atlas_generate_video` / `atlas_quick_generate`, or as the audio parameter for `atlas_transcribe_audio`.
+
+**Three cases where you must say so plainly instead of claiming an upload**: the file is over `max_bytes` (32MB default — common for long video), neither tool is in your list (a server that predates the ticket flow), or the curl failed / the response carried no `url`. Ask for a public link in those cases. Passing a local path straight to a generation tool always fails — do not try it.
+
 - **Note**: Only for Atlas Cloud generation tasks. Uploaded files are temporary and will be cleaned up periodically. Uploading content unrelated to generation tasks (e.g., bulk hosting, illegal content, or abuse) may result in API key suspension
 
 ### Account Tools
@@ -502,7 +516,7 @@ This endpoint requires no authentication.
 
 ## MCP Server Installation
 
-Atlas Cloud MCP Server provides 14 tools for direct use in any MCP-compatible client. Prerequisites: Node.js >= 18 and an [Atlas Cloud API Key](https://www.atlascloud.ai/console/api-keys).
+Atlas Cloud MCP Server provides 16 tools for direct use in any MCP-compatible client (a hosted connector exposes 14 of them). Prerequisites: Node.js >= 18 and an [Atlas Cloud API Key](https://www.atlascloud.ai/console/api-keys).
 
 ### CLI Tools (One-Line Install)
 
