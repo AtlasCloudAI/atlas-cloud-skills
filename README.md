@@ -22,13 +22,13 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 
 <!-- ATLAS-MODELS:START lang=en campaign=atlas-cloud-skills -->
 <!-- ⚠️ Auto-generated from the live model catalog by AtlasCloudAI/.github/scripts/update-models-readme.mjs — do not edit by hand. -->
-- 🎬 **Video** (224) — Seedance 2.5 · MiniMax H3 Max · MiniMax H3 Fast · Gemini Omni 1.1 Flash · MiniMax H3 · Wan-3.0-Prime
+- 🎬 **Video** (226) — Seedance 2.5 · MiniMax H3 Max · MiniMax H3 Fast · Gemini Omni 1.1 Flash · MiniMax H3 · Wan-3.0-Prime
 - 🎨 **Image** (140) — GPT Image 2.5 Sunburst · GPT Image 2.5 Flare · Seedream v4.7 · MAI-Image-2.6-Flash
 - 🧊 **3D** (14) — Seed3D 2.0 · Tripo H3.1 · Hunyuan 3D Rapid · Hunyuan 3D Pro
 - 💬 **LLM** (79) — DeepSeek V4.1 Flash 1017 · Gemini 4 Argon · DeepSeek V4.1 Flash · GLM 5.3 Flash
 - 🔊 **Audio (TTS · Music · ASR)** (13) — Seed Audio 1.0 · MiniMax Speech 2.6 Turbo · MiniMax Speech 2.6 HD · xAI TTS v1
 
-- 📚 **Explore more** — [all 502 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+- 📚 **Explore more** — [all 504 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
 <!-- ATLAS-MODELS:END -->
 
 ## Contents
