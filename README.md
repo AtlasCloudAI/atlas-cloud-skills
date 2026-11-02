@@ -26,9 +26,9 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - 🎨 **Image** (138) — GPT Image 2.5 Sunburst · GPT Image 2.5 Flare · Seedream v4.7 · MAI-Image-2.6-Flash
 - 🧊 **3D** (14) — Seed3D 2.0 · Tripo H3.1 · Hunyuan 3D Rapid · Hunyuan 3D Pro
 - 💬 **LLM** (83) — DeepSeek V4.1 Flash 1017 · Kimi K3.1 Pro HighSpeed · Kimi K3.1 Pro · Gemini 4 Argon
-- 🔊 **Audio (TTS · Music · ASR)** (15) — Seed Audio 1.0 · MiniMax Speech 2.6 Turbo · MiniMax Speech 2.6 HD · xAI TTS v1
+- 🔊 **Audio (TTS · Music · ASR)** (19) — Seed Audio 1.0 · MiniMax Speech 2.6 Turbo · MiniMax Speech 2.6 HD · xAI TTS v1
 
-- 📚 **Explore more** — [all 500 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+- 📚 **Explore more** — [all 504 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
 <!-- ATLAS-MODELS:END -->
 
 ## Contents
