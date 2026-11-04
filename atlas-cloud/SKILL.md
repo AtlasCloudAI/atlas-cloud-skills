@@ -86,10 +86,19 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), all
 
 #### `atlas_get_model_info` — Get Model Details
 - **Params**: `model` (required): Model ID, e.g. `"deepseek-ai/deepseek-v3.2"`
-- **Purpose**: Get full model info including API docs, input/output schema, pricing, cURL examples, Playground link
+- **Purpose**: Get full model info including API docs, input/output schema, pricing, cURL examples, Playground link. Its prices help choose a model; quote the user with the generation tool (see the two-call billing flow below)
 - **Examples**: `model="deepseek-ai/deepseek-v3.2"`
 
 ### Generation Tools
+
+**Two-call billing flow (hosted connector and plugin).** A generation tool called without
+`confirmed` only quotes: it is free, prices this exact request, and returns the model, the
+estimated cost, the billing account, an `idempotency_key` and a `confirmation_token`, and nothing
+starts. Show the user that quote and wait for a yes; then call again with the same arguments,
+`confirmed: true`, the same `idempotency_key` and the `confirmation_token`. To tell the user what a
+request will cost, always make that quote call, even when they only ask about the price: prices
+from `atlas_get_model_info`, `atlas_list_models` or the tables on this page are for choosing a
+model, not a quote.
 
 #### `atlas_generate_image` — Generate Image
 - **Params**:
@@ -441,7 +450,7 @@ Before you send a response to the user that references any model ID, parameter, 
 2. For generation code, you must have just fetched the model's schema (or called `atlas_get_model_info`) and confirmed each parameter you use.
 3. If either check was not performed — stop and perform it. Do not fall back to "probably correct" values from the tables in this skill.
 
-The tables below are **illustrative only**. They go stale. Treat them as hints about what *kind* of models exist, never as a source of truth for an actual request.
+The tables below are **illustrative only**. They go stale. Treat them as hints about what *kind* of models exist, never as a source of truth for an actual request. In particular, never quote these prices to the user: the cost of a request comes from the generation tool's quote (see the two-call billing flow).
 
 ## Popular Models (illustrative only — MUST verify via API before use)
 
