@@ -28,7 +28,7 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - 💬 **LLM** (83) — DeepSeek V4.1 Flash 1017 · Kimi K3.1 Pro HighSpeed · Kimi K3.1 Pro · Gemini 4 Argon
 - 🔊 **Audio (TTS · Music · ASR)** (19) — Seed Audio 1.0 · MiniMax Speech 2.6 Turbo · MiniMax Speech 2.6 HD · xAI TTS v1
 
-- 📚 **Explore more** — [all 504 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+- 📚 **Explore more** — [all 505 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
 <!-- ATLAS-MODELS:END -->
 
 ## Contents
