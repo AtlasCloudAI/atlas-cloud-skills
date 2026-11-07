@@ -50,16 +50,17 @@ Content-Type: application/json
 
 > **Using this through the Atlas Cloud plugin (no API key needed)**
 >
-> The [Atlas Cloud Codex plugin](https://github.com/AtlasCloudAI/atlas-cloud-plugin) ships a remote
-> MCP server (`atlas-cloud`) whose credentials come
+> The [Atlas Cloud plugin](https://github.com/AtlasCloudAI/atlas-cloud-plugin) for Codex and Claude Code
+> ships a remote MCP server (`atlas-cloud`) whose credentials come
 > from **one browser sign-in by the user**, not from `ATLASCLOUD_API_KEY`. Generation is billed to
 > the user's own Atlas account.
 >
 > In that environment:
 > - **Do not** ask the user to create, copy or paste an API key, and do not use the
 >   `npx atlascloud-mcp` install below — that route is for a standalone server with its own key.
-> - When authorization is needed, tell the user to click "Authenticate" on the plugin, or run
->   `codex mcp login atlas-cloud`.
+> - When authorization is needed, tell the user to sign in from their client: in Codex, click
+>   "Authenticate" on the plugin or run `codex mcp login atlas-cloud`; in Claude Code, run `/mcp`,
+>   pick the Atlas Cloud server and choose "Authenticate".
 > - Everything else on this page still applies: the tool names, parameters, the mandatory
 >   two-call billing flow, and every reference doc. Only the credential differs.
 >
