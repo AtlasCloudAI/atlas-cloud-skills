@@ -3,8 +3,6 @@
   "outDir": "build",
   "modelProfile": "seedance-default",
   "execution": { "adapter": "atlas-rest", "apiKeyEnv": "ATLASCLOUD_API_KEY", "verifyModels": true },
-  "ffmpeg": "ffmpeg",
-  "ffprobe": "ffprobe",
   "grid": {
     "model": "bytedance/seedream-v5.0-pro/text-to-image",
     "size": "1728*2304",

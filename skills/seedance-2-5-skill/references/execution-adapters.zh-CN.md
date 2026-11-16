@@ -4,7 +4,9 @@
 
 ## 智能体默认路线
 
-在智能体对话中，**Atlas Cloud Skill** 是默认的直接生成路线。用它查询模型、检查参数、上传本地素材、提交图片或视频任务、轮询并获取结果。只有 Skill 实际提交了任务，才报告 `Execution: atlas-skill`。
+当前客户端暴露了 Atlas MCP 生成工具时，所有生成都用它们（`atlas-mcp`）：每个任务提交前都会先报价。下面的 Skill、CLI、REST 路线都不报价就直接提交，只在没有 MCP 工具、或用户明确要求这条路线时使用，并且每次计费提交前都要先和用户确认模型、时长和预估费用。
+
+没有 MCP 工具时，在智能体对话中，**Atlas Cloud Skill** 是直接生成路线。用它查询模型、检查参数、上传本地素材、提交图片或视频任务、轮询并获取结果。只有 Skill 实际提交了任务，才报告 `Execution: atlas-skill`。
 
 提交后，必须每 2 秒用同一 ID 重复执行 Skill 的预测结果查询步骤，直到任务进入终态。
 
@@ -20,8 +22,8 @@ npx skills add AtlasCloudAI/atlas-cloud-skills
 
 | 选择 | 使用时机 | 可用性检查 |
 |---|---|---|
-| `atlas-skill` | 智能体交互生成的默认选择 | Atlas Cloud Skill 能在当前客户端提交媒体任务 |
-| `atlas-mcp` | 用户明确选择 MCP | 当前客户端暴露 Atlas MCP 生成工具 |
+| `atlas-skill` | 没有 Atlas MCP 工具时的智能体交互生成 | Atlas Cloud Skill 能在当前客户端提交媒体任务 |
+| `atlas-mcp` | 只要暴露了 Atlas MCP 生成工具就默认用它（每个任务先报价） | 当前客户端暴露 Atlas MCP 生成工具 |
 | `atlas-cli` | 用户明确选择终端、脚本、CI 或批量执行 | `atlas auth status`，再执行 `atlas models get` |
 | `atlas-rest` | 使用内置 Node 脚本或受控兼容执行 | `ATLASCLOUD_API_KEY` 和在线模型核验 |
 | `manual` | 没有已认证执行通道 | 只输出提示词、模型 ID 和素材清单 |
@@ -61,6 +63,13 @@ export ATLASCLOUD_API_KEY="<your-key>"
   "modelProfile": "seedance-default"
 }
 ```
+
+脚本的花费和安全限制：
+
+- 提交任何任务之前，先打印一行 `[spend-plan]`，列出每个新的视频任务和计费总秒数。超过 15 秒视频时，除非 `CONFIRM_SPEND_SECONDS` 覆盖这个总数，否则就停在这里。把计划和预估费用给用户看，用户同意后才设置 `CONFIRM_SPEND_SECONDS=<总秒数>`。
+- 视频任务绝不会自动重新提交。已完成但没有原生音轨的视频已经扣过费：脚本把它保存为 `<阶段>.no-audio.mp4` 并停下，要不要再花钱重做由用户决定。`audio.outputRetries` 不再支持。
+- 任务配置不能修改 API 主机（确实需要别的主机时，在环境变量里设 `ATLASCLOUD_API_BASE`）；`apiKeyEnv` 只能是 `ATLASCLOUD_*` 变量；可执行文件只从环境变量读取（`FFMPEG_PATH`、`FFPROBE_PATH`、`ATLAS_CLI_COMMAND`）。
+- `outDir` 和本地参考音频必须在任务目录内，参考音频必须真的是 WAV、MP3、AAC、M4A、OGG 或 FLAC。
 
 只有明确选择 CLI 时才设置 `adapter` 为 `atlas-cli`。`atlas-skill` 和 `atlas-mcp` 会被 Node 脚本明确拒绝，让智能体直接执行，避免错误报告执行通道。
 

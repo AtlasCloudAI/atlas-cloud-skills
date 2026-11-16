@@ -2,12 +2,17 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { apiKeyEnvName } from "./guards.mjs";
 
 const POLL_INTERVAL_SECONDS = 2;
 const POLL_INTERVAL_MS = POLL_INTERVAL_SECONDS * 1000;
 
-export function resolveAtlasCliCommand(config = {}) {
-  const explicit = config.execution?.cliCommand || config.cliCommand || process.env.ATLAS_CLI_COMMAND;
+// The executable comes from the environment only: a job config must not be
+// able to choose which program the runner starts.
+export function resolveAtlasCliCommand(config = {}, log = console.log) {
+  const configured = config.execution?.cliCommand || config.cliCommand;
+  if (configured) log(`[executor] ignoring cliCommand ${JSON.stringify(configured)} from the job config; set ATLAS_CLI_COMMAND in the environment instead.`);
+  const explicit = process.env.ATLAS_CLI_COMMAND;
   if (explicit) return explicit;
   const userLocal = join(homedir(), ".local", "bin", "atlas");
   return existsSync(userLocal) ? userLocal : "atlas";
@@ -56,7 +61,7 @@ export function atlasCliIsAvailable(command = "atlas") {
 }
 
 function atlasApiKey(config) {
-  const apiKeyEnv = config.execution?.apiKeyEnv || config.apiKeyEnv || "ATLASCLOUD_API_KEY";
+  const apiKeyEnv = apiKeyEnvName(config);
   return process.env[apiKeyEnv] || process.env.ATLASCLOUD_API_KEY || process.env.ATLAS_CLOUD_API_KEY;
 }
 
@@ -66,7 +71,7 @@ export function atlasCliCanRun(config = {}) {
 }
 
 export function createAtlasCliExecutor({ config, root, log = console.log }) {
-  const command = resolveAtlasCliCommand(config);
+  const command = resolveAtlasCliCommand(config, log);
 
   if (!atlasCliIsAvailable(command)) {
     throw new Error(`atlas-cli is unavailable (${command}). Install it, then run \`${command} auth login\`, or use execution.adapter: \"atlas-rest\".`);

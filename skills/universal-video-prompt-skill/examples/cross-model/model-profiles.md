@@ -149,9 +149,11 @@ documented enumeration was **narrower** than what submission accepts:
 | `kwaivgi/kling-v3.0-pro/text-to-video` | `duration: 5 or 10` | 15s works |
 
 **Treat this as a hard rule, not a caution:** a documented enumeration is a
-hypothesis. The only authority is a submission. Cheap to test — a rejected
-submission creates no task and costs nothing, so testing the value you actually
-want is strictly better than designing around the table.
+hypothesis. The authority is what the live API accepts. Test it with a quote
+(the generation tool without `confirmed`, or `/model/calculate`): an unsupported
+value is rejected there and nothing is spent, so testing the value you actually
+want is strictly better than designing around the table. Never test by
+submitting a real job — if the value is accepted, it runs and is billed.
 
 The failure this prevents is asymmetric and invisible: believing a too-narrow
 table silently degrades the spec, the run succeeds, and nothing in the output
