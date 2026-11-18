@@ -12,7 +12,7 @@
     { "prompt": "Vertical opening frame in a warm kitchen: one hand holds beaten egg beside diced tomatoes, no face. Start-frame reference.", "size": "1152*2048" }
   ],
   "audio": { "_comment": "Optional reference audio. A rejected input audio reference stops the run and is not silently removed.", "references": [] },
-  "video": { "refModel": "bytedance/seedance-2.0/reference-to-video", "resolution": "1080p", "ratio": "9:16", "duration": 15, "generate_audio": true, "watermark": false },
+  "video": { "refModel": "bytedance/seedance-2.5/reference-to-video", "resolution": "1080p", "ratio": "9:16", "duration": 15, "generate_audio": true, "watermark": false },
   "styleSuffix": "Warm hand-drawn food-animation style, vertical frame, one pair of hands, one black iron wok, no face or extra hands, soft warm light, one clear camera intention per shot.",
   "segments": [
     { "refs": [1,2,3,4,5], "duration": 15, "prompt": "Use Image 1 for the hands, Image 2 for the kitchen, and Image 3 for style. Start from Image 5: pour egg into the hot wok, form soft curds, remove them, then stir-fry tomato until red juice bubbles. Slow push-in; end on the tomato sauce state." },

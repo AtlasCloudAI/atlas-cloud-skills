@@ -19,7 +19,7 @@
   },
 
   "video": {
-    "refModel": "bytedance/seedance-2.0/reference-to-video",
+    "refModel": "bytedance/seedance-2.5/reference-to-video",
     "resolution": "1080p",
     "ratio": "9:16",
     "duration": 15,

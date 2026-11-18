@@ -1,8 +1,8 @@
 # Atlas execution adapters
 
 Creative planning and the model profile are independent from the execution
-channel. Default profile: Seedream 5.0 Pro for stills and Seedance 2.0 for
-video. Verify that a chosen model supports the required route before a billable
+channel. Default profile: Seedream 5.0 Pro for stills and Seedance 2.5 for
+video (`modelProfile: "seedance-2.0"` selects the Seedance 2.0 fallback). Verify that a chosen model supports the required route before a billable
 generation.
 
 ## Default agent route
@@ -95,10 +95,17 @@ execution path or billing destination.
 Spend and safety limits in the runner:
 
 - Before anything is submitted it prints a `[spend-plan]` line with every new
-  video job and the total billed seconds. A run above 15 video seconds stops
-  there unless `CONFIRM_SPEND_SECONDS` covers the total. Show the user the plan
-  and its estimated cost, and set `CONFIRM_SPEND_SECONDS=<total>` only after
-  they approve it.
+  image job (storyboard grid, generated references) and every new video job
+  with the total billed seconds, and it stops there unless
+  `CONFIRM_SPEND_IMAGES` and `CONFIRM_SPEND_SECONDS` cover that plan. Nothing
+  is approved by default, and `GRID_ONLY` / `REFS_ONLY` runs are gated the same
+  way for their images. Show the user the plan and its estimated cost, and set
+  `CONFIRM_SPEND_IMAGES=<images>` and `CONFIRM_SPEND_SECONDS=<seconds>` only
+  after they approve it. Cached outputs and resumed prediction IDs are not
+  counted, because they bill nothing new.
+- Seedance 2.5 image-to-video takes its frame shape from the input image (its
+  `ratio` accepts only `adaptive`), so the runner sends `adaptive` there; the
+  stitch step still scales to `video.ratio`.
 - A video task is never resubmitted automatically. A completed video without its
   native audio track has already been billed: the runner keeps it as
   `<stage>.no-audio.mp4` and stops, and only the user decides whether to pay for

@@ -14,7 +14,7 @@
   },
 
   "video": {
-    "model": "bytedance/seedance-2.0/image-to-video",
+    "model": "bytedance/seedance-2.5/image-to-video",
     "resolution": "1080p",
     "ratio": "9:16",
     "duration": 5,

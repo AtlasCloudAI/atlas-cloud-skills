@@ -78,14 +78,17 @@ satisfiable:
    against the live model page rather than a doc example; treat a 200 response as
    inconclusive until the page content confirms the model exists.
 
-   ⚠️ **A published enumeration is a hypothesis, not a limit.** Documented ranges
-   are frequently narrower than what submission accepts, and pages contradict
-   themselves — the same page has been observed stating three different duration
-   ranges in three places. **Probe the value you actually want with a quote** (call the generation
-   tool without `confirmed`, or price it with `/model/calculate`): an
-   unsupported value is rejected there and nothing is spent. Never probe by
-   submitting a real job — if the value is accepted, that job runs and is
-   billed. Testing still beats designing around the table.
+   ⚠️ **Values outside the published table: the quote's error decides, never a
+   real submission.** Documented ranges can be narrower than what a provider
+   accepts, and pages contradict themselves — the same page has been observed
+   stating three different duration ranges in three places. To find out whether the value you actually want works, ask for it in a quote
+   (call the generation tool without `confirmed`). The Atlas MCP server
+   validates every parameter against the model's live schema at that step, so a
+   value outside the schema's enumeration is rejected there with an error and
+   nothing is spent: **take that error as the answer** and design around a
+   supported value. Never try the value with a real submission — if it is
+   accepted, that job runs and is billed. Asking still beats designing around
+   the table.
 
    This error is asymmetric: believing a too-narrow table silently degrades the
    spec, the run then succeeds, and nothing in the output reveals that a better

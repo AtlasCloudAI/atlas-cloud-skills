@@ -9,11 +9,13 @@
 //   node generate.mjs <config.json>
 //   GRID_ONLY=1 node generate.mjs <config.json>   # Generate grid and crop frames only; display grid.png and inspect it before video work.
 //   CLIPS_MAX=1 node generate.mjs <config.json>   # In grid mode, run only the first N clips as a quality gate.
-//   CONFIRM_SPEND_SECONDS=40 node generate.mjs <config.json>   # Approve up to 40 billed video seconds for this run.
+//   CONFIRM_SPEND_IMAGES=1 CONFIRM_SPEND_SECONDS=40 node generate.mjs <config.json>   # Approve 1 new image and up to 40 billed video seconds for this run.
 //
-// Every run prints a [spend-plan] line before it submits any video. Runs that
-// would bill more than 15 video seconds stop there unless CONFIRM_SPEND_SECONDS
-// covers the plan; set it only after the user has approved that total.
+// Every run (GRID_ONLY and REFS_ONLY included) prints a [spend-plan] line with
+// the new image jobs and billed video seconds before it submits anything, and
+// stops there unless CONFIRM_SPEND_IMAGES and CONFIRM_SPEND_SECONDS cover the
+// plan. Nothing is approved by default: set them only after the user has
+// approved that plan and its cost.
 // A video task is never resubmitted automatically: a failed or silent result
 // stops the run and leaves the retry decision to the user.
 // Requires Node 18+, ffmpeg, and ffprobe. Execution adapters live in scripts/providers/.
@@ -42,8 +44,10 @@ const VID_MODEL = CFG.video?.model || PROFILE.video.i2v;
 const V = { resolution: "1080p", ratio: "9:16", duration: 5, generate_audio: true, watermark: false, ...CFG.video };
 const AUDIO = CFG.audio || {};
 if (AUDIO.outputRetries) console.warn("[config] audio.outputRetries is no longer supported: a video without native audio has already been billed, so the runner stops instead of resubmitting it.");
-// Video seconds a run may bill without an explicit CONFIRM_SPEND_SECONDS: one representative pass.
-const UNCONFIRMED_SPEND_SECONDS = 15;
+// What a run may bill without explicit approval: nothing. Every new image and
+// every billed video second needs CONFIRM_SPEND_IMAGES / CONFIRM_SPEND_SECONDS.
+const UNCONFIRMED_SPEND_IMAGES = 0;
+const UNCONFIRMED_SPEND_SECONDS = 0;
 const MAX_POLL_SECONDS = CFG.maxPollSeconds ?? 900;
 const RES = { "9:16": [1080, 1920], "16:9": [1920, 1080], "1:1": [1080, 1080], "3:4": [1080, 1440], "4:3": [1440, 1080], "21:9": [2520, 1080] };
 const [OW, OH] = RES[V.ratio] || [1080, 1920];
@@ -179,9 +183,33 @@ async function generateVideo(body, label, out, last, resumePredictionId) {
   }
 }
 
+// Seedance 2.5 image-to-video takes its frame from the input image: its ratio
+// accepts only "adaptive". Other models get the configured ratio.
+function i2vRatio(model) {
+  return /^bytedance\/seedance-2\.5\//.test(model) ? "adaptive" : V.ratio;
+}
+
+// The image jobs this run would submit (storyboard grid, generated references).
+function plannedImageJobs() {
+  const jobs = [];
+  const add = (label, out, explicitResumeId) => {
+    if (existsSync(out)) return;   // cached images are not regenerated
+    jobs.push({ label, resumed: Boolean(resumePredictionIdFor(label, explicitResumeId)) });
+  };
+  if (CFG.grid) add("grid", `${DIR}/grid.png`, CFG.grid.resumePredictionId);
+  if (process.env.GRID_ONLY) return jobs;   // a grid-only run stops after the grid
+  if (Array.isArray(CFG.refs)) {
+    CFG.refs.forEach((ref, i) => {
+      if (!ref?.file) add(`ref${i + 1}`, `${DIR}/ref_${pad(i + 1)}.png`, ref?.resumePredictionId);   // local files are copied, not generated
+    });
+  }
+  return jobs;
+}
+
 // The video jobs this run would submit, before anything is submitted.
 function plannedVideoJobs() {
   const jobs = [];
+  if (process.env.GRID_ONLY || process.env.REFS_ONLY) return jobs;   // these runs stop before any video
   const add = (label, out, seconds, explicitResumeId) => {
     if (existsSync(out)) return;   // cached segments are not resubmitted
     const resumed = Boolean(resumePredictionIdFor(label, explicitResumeId));
@@ -202,17 +230,31 @@ function plannedVideoJobs() {
   return jobs;
 }
 
+function approvedAmount(envName, fallback) {
+  if (process.env[envName] === undefined) return fallback;
+  const value = Number(process.env[envName]);
+  if (!Number.isFinite(value) || value < 0) throw new Error(`${envName} must be a non-negative number`);
+  return value;
+}
+
 function enforceSpendPlan() {
+  const imageJobs = plannedImageJobs();
+  const freshImages = imageJobs.filter(job => !job.resumed);
   const jobs = plannedVideoJobs();
   const fresh = jobs.filter(job => !job.resumed);
   const seconds = fresh.reduce((sum, job) => sum + job.seconds, 0);
-  console.log(`[spend-plan] ${fresh.length} new video job(s), ${seconds}s total at ${V.resolution}${jobs.length > fresh.length ? `; ${jobs.length - fresh.length} resumed (already billed)` : ""}: ${fresh.map(job => `${job.label}=${job.seconds}s`).join(", ") || "none"}`);
-  const approved = process.env.CONFIRM_SPEND_SECONDS === undefined ? UNCONFIRMED_SPEND_SECONDS : Number(process.env.CONFIRM_SPEND_SECONDS);
-  if (!Number.isFinite(approved)) throw new Error("CONFIRM_SPEND_SECONDS must be a number of video seconds");
-  if (seconds > approved) {
+  const resumed = imageJobs.length - freshImages.length + jobs.length - fresh.length;
+  console.log(
+    `[spend-plan] ${freshImages.length} new image job(s) with ${IMG_MODEL}: ${freshImages.map(job => job.label).join(", ") || "none"}; `
+    + `${fresh.length} new video job(s), ${seconds}s total at ${V.resolution}: ${fresh.map(job => `${job.label}=${job.seconds}s`).join(", ") || "none"}`
+    + `${resumed ? `; ${resumed} resumed (already billed)` : ""}`,
+  );
+  const approvedImages = approvedAmount("CONFIRM_SPEND_IMAGES", UNCONFIRMED_SPEND_IMAGES);
+  const approvedSeconds = approvedAmount("CONFIRM_SPEND_SECONDS", UNCONFIRMED_SPEND_SECONDS);
+  if (freshImages.length > approvedImages || seconds > approvedSeconds) {
     throw new Error(
-      `[spend-plan] this run would bill ${seconds} video seconds, above the approved ${approved}s. Nothing was submitted. `
-      + `Show the user the plan above and its estimated cost; after they approve it, run again with CONFIRM_SPEND_SECONDS=${seconds}.`,
+      `[spend-plan] this run would submit ${freshImages.length} new image job(s) and ${seconds} billed video seconds; approved: ${approvedImages} image(s), ${approvedSeconds}s. Nothing was submitted. `
+      + `Show the user the plan above and its estimated cost; after they approve it, run again with CONFIRM_SPEND_IMAGES=${freshImages.length} CONFIRM_SPEND_SECONDS=${seconds}.`,
     );
   }
 }
@@ -319,10 +361,12 @@ async function main() {
   if (AUDIO.references !== undefined && !Array.isArray(AUDIO.references)) throw new Error("audio.references must be an array");
   if (AUDIO.references?.length && MODE !== "reference") throw new Error("audio.references is supported only in reference-to-video mode; use native-audio prompt markers for other modes.");
   overlayFilter();   // reject a bad filter before anything is billed
-  if (!process.env.GRID_ONLY && !process.env.REFS_ONLY) enforceSpendPlan();   // before any submission, images included
+  enforceSpendPlan();   // before any submission, images included, in every run mode
   const N = CFG.grid ? await genGridAndSplit(b) : 0;   // Grid is optional: a text-to-video chain needs none.
-  if (CFG.grid && process.env.GRID_ONLY) {
-    console.log("[grid-only] Grid and frame crops complete. Display the storyboard-preview image above; inspect it before running video generation separately.");
+  if (process.env.GRID_ONLY) {
+    console.log(CFG.grid
+      ? "[grid-only] Grid and frame crops complete. Display the storyboard-preview image above; inspect it before running video generation separately."
+      : "[grid-only] This job has no grid; nothing to generate.");
     return;
   }
   if (CFG.refs) await genRefs(b);                      // Reference mode generates the role-specific images first.
@@ -361,7 +405,7 @@ async function main() {
       if (!Number.isInteger(s.first)) throw new Error(`shot-pairs segment ${i + 1} needs a first keyframe index`);
       const out = `${b}/shot${i + 1}.mp4`;
       if (existsSync(out)) { console.log(`[shot${i + 1}] cached — skip`); continue; }
-      const body = { model: VID_MODEL, prompt: s.prompt + (CFG.styleSuffix || ""), image: dataUrl(`${b}/frame_${pad(s.first)}.png`), duration: s.duration || V.duration, resolution: V.resolution, ratio: V.ratio, generate_audio: V.generate_audio, watermark: V.watermark };
+      const body = { model: VID_MODEL, prompt: s.prompt + (CFG.styleSuffix || ""), image: dataUrl(`${b}/frame_${pad(s.first)}.png`), duration: s.duration || V.duration, resolution: V.resolution, ratio: i2vRatio(VID_MODEL), generate_audio: V.generate_audio, watermark: V.watermark };
       if (Number.isInteger(s.last)) body.last_image = dataUrl(`${b}/frame_${pad(s.last)}.png`);
       const d = await generateVideo(body, `shot${i + 1}`, out);
       console.log(`[shot${i + 1}] saved (tokens ${d.completion_tokens})`);
@@ -386,6 +430,7 @@ async function main() {
         body.model = T2V;
       } else {
         body.model = VID_MODEL;
+        body.ratio = i2vRatio(VID_MODEL);
         // Start frame: use prior real tail for a continuous action; otherwise use the independent s.first keyframe.
         body.image = dataUrl((i > 0 && s.chain !== false) ? `${b}/seg${i}_last.png` : `${b}/frame_${pad(s.first)}.png`);
         if (s.last && CFG.grid) body.last_image = dataUrl(`${b}/frame_${pad(s.last)}.png`); // Anchor the segment endpoint to a grid keyframe.
@@ -403,7 +448,7 @@ async function main() {
     for (let i = 0; i < nClips; i++) {
       const out = `${b}/clip${i + 1}.mp4`;
       if (existsSync(out)) { console.log(`[clip${i + 1}] cached — skip`); continue; }
-      const d = await generateVideo({ model: VID_MODEL, prompt: CFG.shots[i] + (CFG.styleSuffix || ""), image: dataUrl(`${b}/frame_${pad(i + 1)}.png`), resolution: V.resolution, ratio: V.ratio, duration: V.duration, generate_audio: V.generate_audio, watermark: V.watermark }, `clip${i + 1}`, out);
+      const d = await generateVideo({ model: VID_MODEL, prompt: CFG.shots[i] + (CFG.styleSuffix || ""), image: dataUrl(`${b}/frame_${pad(i + 1)}.png`), resolution: V.resolution, ratio: i2vRatio(VID_MODEL), duration: V.duration, generate_audio: V.generate_audio, watermark: V.watermark }, `clip${i + 1}`, out);
       console.log(`[clip${i + 1}] saved (tokens ${d.completion_tokens})`);
     }
     if (!Array.from({ length: N }, (_, i) => existsSync(`${b}/clip${i + 1}.mp4`)).every(Boolean)) { console.log("[stitch] Not all clips are present; skipping."); return; }

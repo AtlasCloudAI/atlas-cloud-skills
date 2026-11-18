@@ -1,6 +1,6 @@
 # Atlas 执行适配层
 
-创作规划与模型配置相互独立。默认使用 Seedream 5.0 Pro 生图、Seedance 2.0 生视频。任何计费生成前，都先核实所选模型支持需要的路线。
+创作规划与模型配置相互独立。默认使用 Seedream 5.0 Pro 生图、Seedance 2.5 生视频（`modelProfile: "seedance-2.0"` 可切回 Seedance 2.0）。任何计费生成前，都先核实所选模型支持需要的路线。
 
 ## 智能体默认路线
 
@@ -66,7 +66,8 @@ export ATLASCLOUD_API_KEY="<your-key>"
 
 脚本的花费和安全限制：
 
-- 提交任何任务之前，先打印一行 `[spend-plan]`，列出每个新的视频任务和计费总秒数。超过 15 秒视频时，除非 `CONFIRM_SPEND_SECONDS` 覆盖这个总数，否则就停在这里。把计划和预估费用给用户看，用户同意后才设置 `CONFIRM_SPEND_SECONDS=<总秒数>`。
+- 提交任何任务之前，先打印一行 `[spend-plan]`，列出每个新的图片任务（分镜宫格、生成的参考图）和每个新的视频任务及计费总秒数；除非 `CONFIRM_SPEND_IMAGES` 和 `CONFIRM_SPEND_SECONDS` 覆盖这份计划，否则就停在这里。默认什么都不放行，`GRID_ONLY` / `REFS_ONLY` 的图片也同样过闸。把计划和预估费用给用户看，用户同意后才设置 `CONFIRM_SPEND_IMAGES=<张数>` 和 `CONFIRM_SPEND_SECONDS=<总秒数>`。已缓存的输出和续查的预测 ID 不计入，因为它们不会产生新费用。
+- Seedance 2.5 图生视频的画幅跟随输入图（`ratio` 只接受 `adaptive`），所以脚本对它固定发 `adaptive`；拼接时仍按 `video.ratio` 缩放。
 - 视频任务绝不会自动重新提交。已完成但没有原生音轨的视频已经扣过费：脚本把它保存为 `<阶段>.no-audio.mp4` 并停下，要不要再花钱重做由用户决定。`audio.outputRetries` 不再支持。
 - 任务配置不能修改 API 主机（确实需要别的主机时，在环境变量里设 `ATLASCLOUD_API_BASE`）；`apiKeyEnv` 只能是 `ATLASCLOUD_*` 变量；可执行文件只从环境变量读取（`FFMPEG_PATH`、`FFPROBE_PATH`、`ATLAS_CLI_COMMAND`）。
 - `outDir` 和本地参考音频必须在任务目录内，参考音频必须真的是 WAV、MP3、AAC、M4A、OGG 或 FLAC。

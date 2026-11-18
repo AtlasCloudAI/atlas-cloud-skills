@@ -1,15 +1,21 @@
 import { createAtlasRestExecutor } from "./atlas-rest.mjs";
 import { createAtlasCliExecutor } from "./atlas-cli.mjs";
 
-export const MODEL_PROFILES = Object.freeze({
-  "seedance-default": Object.freeze({
-    image: "bytedance/seedream-v5.0-pro/text-to-image",
-    video: Object.freeze({
-      t2v: "bytedance/seedance-2.0/text-to-video",
-      i2v: "bytedance/seedance-2.0/image-to-video",
-      r2v: "bytedance/seedance-2.0/reference-to-video",
-    }),
+const seedanceProfile = (family) => Object.freeze({
+  image: "bytedance/seedream-v5.0-pro/text-to-image",
+  video: Object.freeze({
+    t2v: `${family}/text-to-video`,
+    i2v: `${family}/image-to-video`,
+    r2v: `${family}/reference-to-video`,
   }),
+});
+
+// seedance-default follows the Atlas default route: Seedance 2.5 first, with
+// Seedance 2.0 kept selectable as the fallback.
+export const MODEL_PROFILES = Object.freeze({
+  "seedance-default": seedanceProfile("bytedance/seedance-2.5"),
+  "seedance-2.5": seedanceProfile("bytedance/seedance-2.5"),
+  "seedance-2.0": seedanceProfile("bytedance/seedance-2.0"),
 });
 
 export function resolveModelProfile(profileName = "seedance-default") {
