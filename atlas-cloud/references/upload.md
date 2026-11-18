@@ -243,14 +243,16 @@ while true; do
 done
 ```
 
-## From the hosted MCP server (WorkBuddy / Codex): `atlas_get_upload_url`
+## From the hosted MCP server: `atlas_get_upload_url`
 
-The hosted server cannot read files on your machine, and in that setup there is no
-API key — you are authenticated by OAuth. So instead of the endpoints above, use the
-MCP tool `atlas_get_upload_url`:
+This applies to every client connected to `https://mcp.atlascloud.ai/mcp` (Codex, Claude Code,
+Cursor, ChatGPT, Claude, WorkBuddy, ...). The hosted server cannot read files on your machine, and
+in that setup there is no API key — you are authenticated by OAuth. So instead of the endpoints
+above, use the MCP tool `atlas_get_upload_url`:
 
 1. Call `atlas_get_upload_url` (optionally with `filename_hint`). It returns
-   `upload_url`, `expires_at`, `max_bytes` and a ready-to-run `curl_example`.
+   `upload_url`, `expires_at`, `max_bytes` (and `max_video_bytes` when videos have their own
+   limit) and a ready-to-run `curl_example`.
 2. POST the raw bytes, file name (with extension) in the `X-Atlas-Filename` header:
 
    ```bash
@@ -260,12 +262,31 @@ MCP tool `atlas_get_upload_url`:
      --data-binary @"/path/to/product.jpg"
    ```
 
-3. The JSON response has `url`. Pass it as `image_url` (or the audio URL parameter)
-   to `atlas_generate_image`, `atlas_generate_video` or `atlas_quick_generate`.
+3. The JSON response has `url` (and `asset_id` when the file was saved to the user's Asset
+   Library). Pass the `url` as `image_url` (or the model's video / audio URL parameter) to
+   `atlas_generate_image`, `atlas_generate_video`, `atlas_generate_audio`,
+   `atlas_transcribe_audio` or `atlas_quick_generate`.
 
 One `upload_url` serves several files until it expires (about 10 minutes). Uploads are
-free; nothing is billed until a generation is submitted. Files over `max_bytes` (32 MB by
-default) are rejected with HTTP 413 — host those elsewhere and pass the public link. If
-the tool is missing from your tool list, the server you are connected to predates it:
-fall back to a public URL.
+free; nothing is billed until a generation is submitted.
 
+**Size limits**: 32 MB per file by default. When uploads are saved to the user's Asset Library
+(accounts with the Asset Library activated), the limits are 50 MB for images and audio and
+100 MB for video and 3D files; the ticket's `max_bytes` / `max_video_bytes` give the values
+that apply. Larger files are rejected with HTTP 413 — host those elsewhere and pass the public
+link.
+
+**Asset Library uploads**: the returned `url` is a short-lived signed link (about 15 minutes). If
+it has expired before the generation runs, call `atlas_use_assets` with the `asset_id` for a
+fresh one. A file the user uploaded earlier does not need uploading again: find it with
+`atlas_search_assets` and pass `asset://<asset_id>` (or the URL from `atlas_use_assets`).
+
+**Other routes on the hosted server**:
+
+- Files attached in a ChatGPT chat: `atlas_import_chat_files` stores them and returns URLs.
+- When you cannot read the file yourself (it is only on the user's device, you cannot run
+  commands, or the upload failed), apps that show Atlas cards offer `atlas_open_upload_card`: it
+  opens a card where the user picks the file. Use it only as that fallback.
+
+If none of these tools is in your tool list, the server you are connected to predates them:
+fall back to a public URL.

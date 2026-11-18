@@ -10,7 +10,7 @@
    ```
    GET https://api.atlascloud.ai/api/v1/models
    ```
-   If the MCP server is installed, call `atlas_list_models` or `atlas_search_docs` instead — same live data.
+   If the MCP server is installed, call `atlas_list_models` or `atlas_get_model_info` instead — same live data.
 
 2. **Filter to `display_console: true`.** Any model with `display_console: false` is internal and will fail for regular users. Do not surface those IDs.
 
