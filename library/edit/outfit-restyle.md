@@ -19,7 +19,7 @@ profile refreshes, and fashion mood exploration.
 
 ## Steps
 
-1. **Upload the portrait** — "Upload this portrait and return the URL." → maps to `atlas_upload_media`; keep the `download_url`.
+1. **Upload the portrait** — "Upload this portrait and return the URL." → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server); keep the returned URL.
 2. **(Optional) Turn a vibe into specifics** — "Describe an 'old-money autumn' outfit: garments, fabrics, colors." → maps to `atlas_chat` with **Claude**.
 3. **Restyle the outfit** — "Change the clothing to [outfit], keep the face, hairstyle, pose, and background unchanged." → maps to `atlas_generate_image` with **Seedream 4.5 (edit)**, passing the uploaded URL as the input image.
    > Tip: ask the agent to `atlas_search_docs` for the model first so it pulls the live edit schema and identity-preservation guidance.

@@ -19,7 +19,7 @@ on-brand variants of one hero shot.
 
 ## Steps
 
-1. **Upload the source photo** — "Upload this local photo so it has a URL." → maps to `atlas_upload_media`; keep the returned `download_url`.
+1. **Upload the source photo** — "Upload this local photo so it has a URL." → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server); keep the returned URL.
 2. **(Optional) Expand the background prompt** — "Describe a warm sunset beach background in one vivid sentence." → maps to `atlas_chat` with **Claude**.
 3. **Swap the background** — "Replace the background with [scene], keep the subject, pose, and lighting on the subject unchanged." → maps to `atlas_generate_image` with **Nano Banana 2 (edit)**, passing the uploaded URL as the input image.
    > Tip: ask the agent to `atlas_search_docs` for the model first so it pulls the live edit schema (input-image field name, supported sizes).

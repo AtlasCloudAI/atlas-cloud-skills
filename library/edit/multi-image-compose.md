@@ -19,7 +19,7 @@ or stage a product in a curated scene.
 
 ## Steps
 
-1. **Upload every reference** — "Upload each of these local images and list their URLs." → maps to `atlas_upload_media` once per file; collect all `download_url`s.
+1. **Upload every reference** — "Upload each of these local images and list their URLs." → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server); one upload ticket takes every file — collect all the returned URLs.
 2. **(Optional) Draft a staging brief** — "Write a one-paragraph scene brief placing the subject from image 1 into the location from image 2." → maps to `atlas_chat` with **Claude**.
 3. **Compose** — "Combine these references into one scene: keep the person from ref A, the product from ref B, place them in the setting from ref C, match lighting and scale." → maps to `atlas_generate_image` with **Seedream 4.5 (sequential)**, passing the uploaded URLs as the reference/input images.
    > Tip: ask the agent to `atlas_search_docs` for the model first — the multi-image input field name and the max number of refs vary by model, so pull the live schema.

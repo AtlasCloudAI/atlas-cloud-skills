@@ -18,7 +18,7 @@ A short (5–10s) advertising clip that animates a single product still into a p
 ## Steps
 
 1. **Get a clean hero still** — if your product photo is messy, generate one with the [E-commerce Product Hero Shot](../visual/ecommerce-hero.md) recipe first.
-2. **Upload the still** — ask the agent to upload your local product image so it becomes a URL → maps to `atlas_upload_media`.
+2. **Upload the still** — ask the agent to upload your local product image so it becomes a URL → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server).
 3. **Draft the motion** — "Animate this product shot: slow 15° turntable, soft light sweep left to right, shallow depth of field, 5 seconds." → maps to `atlas_generate_video` with **Seedance 2.5** (`seedance-2.0-fast` for the cheap draft pass).
    > Tip: ask the agent to `atlas_search_docs` for the model first so it pulls the live schema (duration, aspect ratio, resolution params change per model).
 4. **Final render** — re-run the approved prompt on **Kling 3 image-to-video** for the crisp, high-fidelity version.

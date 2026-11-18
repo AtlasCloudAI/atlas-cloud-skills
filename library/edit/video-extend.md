@@ -19,7 +19,7 @@ before a cut.
 
 ## Steps
 
-1. **Upload the source clip** — "Upload this local video and return the URL." → maps to `atlas_upload_media`; keep the `download_url`.
+1. **Upload the source clip** — "Upload this local video and return the URL." → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server); keep the returned URL.
 2. **Describe the continuation** — say what happens next and that motion/style must stay continuous. Keep the camera and pacing consistent with the source.
 3. **Extend** — "Continue this clip for another few seconds, keeping the same subject, motion, and style." → maps to `atlas_generate_video` with **Wan (video-extend)**, passing the uploaded clip URL.
    > Tip: ask the agent to `atlas_search_docs` for the video-extend model first — the input-video field, max added duration, and resolution constraints are model-specific, so pull the live schema.

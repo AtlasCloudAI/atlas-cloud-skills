@@ -17,10 +17,10 @@ A short reveal clip where your flat 2D logo becomes a glossy, toy-like 3D figuri
 
 ## Steps
 
-1. **Upload the logo** — ask the agent to upload your logo file so it becomes a URL → maps to `atlas_upload_media`. (Need a logo first? Run the [Brand Logo & Wordmark Concepts](../visual/brand-logo-concepts.md) recipe.)
+1. **Upload the logo** — ask the agent to upload your logo file so it becomes a URL → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server). (Need a logo first? Run the [Brand Logo & Wordmark Concepts](../visual/brand-logo-concepts.md) recipe.)
 2. **Make the figurine still** — "Turn this logo into a collectible vinyl figurine on a round base, studio lighting, on a desk, packaging blister behind it." → maps to `atlas_generate_image` (edit) with **Nano Banana Pro**.
    > Tip: ask the agent to `atlas_search_docs` for the edit model first so it pulls the live input-image field name and size options.
-3. **Upload the figurine still** — same `atlas_upload_media` step on the new render.
+3. **Upload the figurine still** — same upload step on the new render.
 4. **Animate the turntable** — drive a clean 360° spin → maps to `atlas_generate_video`. Try **Kling effects** for a ready-made reveal, or **Seedance 2.5 i2v** (`seedance-2.0-fast` draft → full render) for a custom orbit.
 5. **Polish** — ask the agent for an ffmpeg loop (seamless start/end) and an optional logo lockup card at the end.
 
