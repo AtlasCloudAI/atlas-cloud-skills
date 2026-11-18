@@ -81,9 +81,11 @@ satisfiable:
    ⚠️ **A published enumeration is a hypothesis, not a limit.** Documented ranges
    are frequently narrower than what submission accepts, and pages contradict
    themselves — the same page has been observed stating three different duration
-   ranges in three places. **Submit the value you actually want and let the API
-   answer.** A rejected submission creates no task and costs nothing, so testing
-   beats designing around the table.
+   ranges in three places. **Probe the value you actually want with a quote** (call the generation
+   tool without `confirmed`, or price it with `/model/calculate`): an
+   unsupported value is rejected there and nothing is spent. Never probe by
+   submitting a real job — if the value is accepted, that job runs and is
+   billed. Testing still beats designing around the table.
 
    This error is asymmetric: believing a too-narrow table silently degrades the
    spec, the run then succeeds, and nothing in the output reveals that a better

@@ -11,7 +11,7 @@
     { "prompt": "Hand-drawn food-animation style: finished tomato-and-egg stir-fry on a white plate, glossy red and yellow, scallion and rising steam. Product reference.", "size": "1152*2048" },
     { "prompt": "Vertical opening frame in a warm kitchen: one hand holds beaten egg beside diced tomatoes, no face. Start-frame reference.", "size": "1152*2048" }
   ],
-  "audio": { "_comment": "Optional reference audio. A rejected input audio reference stops the run and is not silently removed.", "outputRetries": 2, "references": [] },
+  "audio": { "_comment": "Optional reference audio. A rejected input audio reference stops the run and is not silently removed.", "references": [] },
   "video": { "refModel": "bytedance/seedance-2.0/reference-to-video", "resolution": "1080p", "ratio": "9:16", "duration": 15, "generate_audio": true, "watermark": false },
   "styleSuffix": "Warm hand-drawn food-animation style, vertical frame, one pair of hands, one black iron wok, no face or extra hands, soft warm light, one clear camera intention per shot.",
   "segments": [

@@ -145,7 +145,7 @@
 
 1. 需要生成 Storyboard 时，先只生成静帧，在对话中展示，检查后才发起视频请求。
 2. 用户提供 Storyboard 时，若对话中还不可见则展示它，然后检查是否适合所选路线。
-3. 分镜通过后直接生成一条代表性视频，不等待用户确认；不通过则先优化分镜。
+3. 分镜通过后，先对一条代表性视频报价（模型、时长、分辨率、预估费用），等用户在新消息里明确确认后再提交；不通过则先优化分镜。之后每一段计费任务都同样先报价、再确认。
 4. 按主体一致性、锁、段落末态、构图、运动、接缝、音频的顺序检查，**第一个失败就停**——身份或落点错了，后面全白查。只重做出错镜头或片段。
 5. 接龙必须按顺序生成，因为下一段要用真实尾帧。剪辑型视频则独立生成各镜头，再在时间线中处理预先设计的转场。
 
@@ -157,9 +157,9 @@
 
 创作路线与提交方式相互独立。默认使用 Seedream 5.0 Pro 生图、Seedance 2.0 生视频；改模型前先核实其支持所需路线。
 
-在智能体对话中，默认由 **Atlas Cloud Skill 直接执行生成**。它可以查模型、上传本地素材、提交图片或视频任务、轮询并取回结果。只有它实际提交了任务，才报告 `Execution: atlas-skill`。
+只要工具列表里有 Atlas MCP 生成工具（`atlas_generate_image`、`atlas_generate_video` 等），它们就是唯一的生成路线，因为每个任务提交前都会先报价。这时不要运行 `scripts/generate.mjs`，也不要自己调 Atlas REST API：这两条路都会直接提交，不报价。只有用户明确要求终端、CI 或批量执行时才用脚本。
 
-只有用户明确选择 MCP 且当前客户端暴露了生成工具时，才用 `atlas-mcp`。只有用户明确选择终端、脚本、CI 或批量执行时，才用 `atlas-cli`。若 Atlas Cloud Skill 缺失，先协助安装 `AtlasCloudAI/atlas-cloud-skills`，再选择替代路径。
+没有这些工具时，在智能体对话中由 **Atlas Cloud Skill 直接执行生成**。它可以查模型、上传本地素材、提交图片或视频任务、轮询并取回结果。每次计费提交前，先告诉用户模型、时长、分辨率和预估费用，等用户明确确认。只有它实际提交了任务，才报告 `Execution: atlas-skill`。只有用户明确选择终端、脚本、CI 或批量执行时，才用 `atlas-cli`。若 Atlas Cloud Skill 缺失，先协助安装 `AtlasCloudAI/atlas-cloud-skills`，再选择替代路径。
 
 报告“缺少 Atlas Cloud API Key”之前，必须检查**实际选中的执行进程**。REST 脚本先检查 `ATLASCLOUD_API_KEY`，再兼容检查 `ATLAS_CLOUD_API_KEY`。不要根据另一个服务商、插件或进程的状态推断凭据是否存在；不同执行通道可能拥有相互独立的凭据作用域。
 
@@ -186,6 +186,8 @@
 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
 CLIPS_MAX=1 node scripts/generate.mjs scripts/myjob.json
 SEGS_MAX=1 node scripts/generate.mjs scripts/myjob.json
+# 超过 15 秒计费视频会停在打印出的 [spend-plan] 行；把计划和费用给用户看，同意后再带上总秒数
+CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
 ```
 
 脚本输出 `[storyboard-preview]` 绝对路径时，必须把该图展示给用户并自行检查，再继续视频任务。详细执行规则见 [中文执行适配层](execution-adapters.zh-CN.md)。
