@@ -244,6 +244,28 @@ Keep creative route selection independent from how a job is submitted. The
 default models are Seedream 5.0 Pro for stills and Seedance 2.0 for video;
 users may override them only after verifying route support.
 
+**Inside the Atlas Cloud plugin (Codex, ChatGPT, Claude, WorkBuddy)** the Atlas
+MCP tools in your tool list *are* the Atlas route — use them for every stage and
+ignore the API-key, Skill-install and runner instructions below, which are for
+standalone setups:
+
+- Generate every still — storyboard boards, keyframes, reference images — with
+  `atlas_generate_image` on an Atlas image model (default Seedream 5.0 Pro).
+  Never use the host's built-in image generator for any stage of this workflow,
+  even for a quick draft: the user asked for an Atlas workflow and is billed and
+  shown results on that basis.
+- Each generation tool returns a live quote and stops. When you relay the first
+  quote, also say which Atlas model will make each later stage (for example
+  "storyboard: Seedream 5.0 Pro; video: Seedance 2.0") and that each step is
+  quoted before it runs; then wait for a yes. Do not ask the user to choose
+  models or a budget up front.
+- Upload local references with `atlas_get_upload_url`; poll with
+  `atlas_get_prediction` (call it again right away — the server already waits
+  between checks), and keep polling in the same turn until each stage finishes.
+- If the Atlas tools are missing, the plugin is not signed in: tell the user how
+  to sign in. Do not install a Skill, look for an API key, or run
+  `scripts/generate.mjs` to get around it — those routes submit with no quote.
+
 Whenever Atlas MCP generation tools (`atlas_generate_image`,
 `atlas_generate_video`, ...) are in your tool list, they are the only generation
 route, because they quote every job before it runs. In that case never run
@@ -296,7 +318,7 @@ Apply these rules to every image and video generation:
 
 The 2-second interval applies to every Atlas execution route in this workflow.
 For `atlas-skill`, repeat its prediction-result step with the same ID. For
-`atlas-mcp`, call `atlas_get_prediction` with the same ID every 2 seconds. The
+`atlas-mcp`, call `atlas_get_prediction` again with the same ID as soon as it answers (it waits up to about 20 seconds per call). The
 MCP server performs a single status lookup per tool call; the agent owns the
 loop. The bundled REST and CLI adapters enforce the interval in code. A status
 lookup is read-only and must never be replaced with another generation call.

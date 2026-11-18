@@ -28,7 +28,7 @@ npx skills add AtlasCloudAI/atlas-cloud-skills
 | `atlas-rest` | 使用内置 Node 脚本或受控兼容执行 | `ATLASCLOUD_API_KEY` 和在线模型核验 |
 | `manual` | 没有已认证执行通道 | 只输出提示词、模型 ID 和素材清单 |
 
-MCP 服务端本身不维护后台轮询循环。走 `atlas-mcp` 时，智能体必须每 2 秒用同一预测 ID 调用一次 `atlas_get_prediction`，直到任务进入终态。
+MCP 服务端本身不维护后台轮询循环。走 `atlas-mcp` 时，智能体用同一预测 ID 反复调用 `atlas_get_prediction`，每次返回后立刻再调（服务端每次最多等约 20 秒），直到任务进入终态。
 
 不要声称 Node 脚本调用了 MCP 或智能体 Skill；两者都属于智能体层路线。也不要因为 CLI 已安装就让脚本静默切换到 CLI。
 

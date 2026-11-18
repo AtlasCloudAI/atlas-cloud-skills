@@ -7,6 +7,42 @@ description: "Atlas Cloud API integration skill — quickly call 300+ AI image g
 
 Atlas Cloud is an AI API aggregation platform that provides access to 300+ image, video, audio (TTS · music · speech-to-text), 3D, and LLM models through a unified interface. This skill helps you quickly integrate Atlas Cloud API into any project.
 
+## Read this first when Atlas tools are in your tool list or the user mentions Atlas Cloud
+
+If your tool list includes Atlas Cloud MCP tools (`atlas_generate_image`, `atlas_generate_video`,
+`atlas_get_prediction`, `atlas_get_upload_url`, ...), you are running inside the Atlas Cloud plugin.
+Then, for anything the user wants generated:
+
+1. **Use only those tools.** Do not call `api.atlascloud.ai` yourself with curl or a script, and do
+   not look for `ATLASCLOUD_API_KEY` — there is none; the plugin already signed the user in. The
+   REST examples further down this page are for developers integrating Atlas into their own code.
+2. **Local files go through the upload tool.** For an image, video or audio file on the user's
+   machine, call `atlas_get_upload_url`, POST the file to the `upload_url` it returns (wait for that
+   curl to finish), and pass the `url` from its response to the generation tool. Never inline the
+   file as base64 or a `data:` URI.
+3. **Never claim a result you did not get.** Atlas tools can take a few seconds to load after a
+   chat starts, and again at the start of a new turn, often right after the user confirms a quote.
+   If they are missing from your tool list, wait about 5 seconds and look again, up to 3 times. If a
+   call fails with "is not a function", that call never reached Atlas and nothing was spent, even
+   when the tool is listed: wait about 5 seconds (in a JavaScript cell,
+   `await new Promise(r => setTimeout(r, 5000))`) and make the exact same call again, same tool and
+   same arguments, up to 3 times, before you tell the user anything. Do not switch to a different
+   Atlas tool to get around it; a confirmation only works with the tool that quoted it. Try again on
+   every new user message too; never repeat an earlier "not connected" or "could not submit"
+   without trying. If it still fails after that, tell the user plainly that Atlas is not reachable
+   right now and nothing was generated. Do not say an image or video was made unless a tool call returned it. Do not switch
+   to another generator (such as a built-in image tool) instead: the user asked for Atlas, so ask
+   them to sign in or retry rather than handing back a result from somewhere else.
+4. **Quote first, then generate, then show.** To tell the user what something will cost, call the
+   generation tool itself with their settings and without `confirmed`. That call is free: it prices
+   this exact request, returns the billing account and a confirmation_token, and stops. Relay the
+   model, the cost and the billing account, and wait for a yes. Do this even when the user only asks
+   what it would cost: prices from `atlas_get_model_info`, `atlas_list_models` or the tables on this
+   page are for choosing a model, not a quote. When the user confirms, call again with the same
+   arguments, `confirmed: true`, and the idempotency_key and confirmation_token shown in the quote.
+   Poll `atlas_get_prediction` in the same turn until it finishes, save the result locally and show
+   it with `![title](/absolute/path/file.ext)`.
+
 ## Quick Start
 
 ### 1. Get an API Key
@@ -50,17 +86,28 @@ Content-Type: application/json
 
 > **Using this through the Atlas Cloud plugin (no API key needed)**
 >
-> The [Atlas Cloud plugin](https://github.com/AtlasCloudAI/atlas-cloud-plugin) for Codex and Claude Code
-> ships a remote MCP server (`atlas-cloud`) whose credentials come
+> The [Atlas Cloud plugin](https://github.com/AtlasCloudAI/atlas-cloud-plugin) (Codex, Cursor) ships a remote
+> MCP server (`atlas-cloud`) whose credentials come
 > from **one browser sign-in by the user**, not from `ATLASCLOUD_API_KEY`. Generation is billed to
 > the user's own Atlas account.
 >
 > In that environment:
 > - **Do not** ask the user to create, copy or paste an API key, and do not use the
 >   `npx atlascloud-mcp` install below — that route is for a standalone server with its own key.
-> - When authorization is needed, tell the user to sign in from their client: in Codex, click
->   "Authenticate" on the plugin or run `codex mcp login atlas-cloud`; in Claude Code, run `/mcp`,
->   pick the Atlas Cloud server and choose "Authenticate".
+> - Sign-in: the Atlas sign-in page opens in the browser when the plugin is installed, or on the
+>   first Atlas tool call. Ask the user to finish it there and come back. If it never opened (or
+>   was closed): in the Codex app, open **Settings**, find **atlas-cloud** in the MCP servers list
+>   and click its sign-in (Authenticate) button; in Cursor, open **Customize → MCPs** (or
+>   **Cursor Settings → MCP**), find **atlas-cloud** and click its sign-in button. Only a user
+>   working in the Codex CLI in a terminal should run `codex mcp login atlas-cloud`; do not send
+>   app users to a terminal, and never ask for an API key.
+> - Every generation is quoted before it runs. Pick the model and parameters yourself — do not
+>   ask the user to choose a model or a budget first unless they asked to choose. Unless they ask
+>   for top quality, default to a fast, cost-effective model. Call the generation tool once to get
+>   the live quote, then in one short message show the model, the key parameters and the price,
+>   name one higher-quality alternative with its price if there is one, and wait for an explicit
+>   yes before calling again with `confirmation_token`. Do this for each billable step (a
+>   storyboard image, then the video).
 > - Everything else on this page still applies: the tool names, parameters, the mandatory
 >   two-call billing flow, and every reference doc. Only the credential differs.
 >
@@ -70,7 +117,7 @@ Content-Type: application/json
 
 
 
-If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), all 16 tools below are available for direct invocation. A hosted connector exposes 14 of them — `atlas_chat` and `atlas_upload_media` are local-only, the latter because a hosted server cannot read the caller's disk. Check your own tool list rather than assuming.
+If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), all 16 tools below are available for direct invocation. A hosted connector exposes 15 of them — `atlas_upload_media` is local-only, because a hosted server cannot read the caller's disk. Check your own tool list rather than assuming.
 
 ### Model Discovery Tools
 
@@ -87,19 +134,10 @@ If the user has installed the Atlas Cloud MCP Server (`npx atlascloud-mcp`), all
 
 #### `atlas_get_model_info` — Get Model Details
 - **Params**: `model` (required): Model ID, e.g. `"deepseek-ai/deepseek-v3.2"`
-- **Purpose**: Get full model info including API docs, input/output schema, pricing, cURL examples, Playground link. Its prices help choose a model; quote the user with the generation tool (see the two-call billing flow below)
+- **Purpose**: Get full model info including API docs, input/output schema, pricing, cURL examples, Playground link
 - **Examples**: `model="deepseek-ai/deepseek-v3.2"`
 
 ### Generation Tools
-
-**Two-call billing flow (hosted connector and plugin).** A generation tool called without
-`confirmed` only quotes: it is free, prices this exact request, and returns the model, the
-estimated cost, the billing account, an `idempotency_key` and a `confirmation_token`, and nothing
-starts. Show the user that quote and wait for a yes; then call again with the same arguments,
-`confirmed: true`, the same `idempotency_key` and the `confirmation_token`. To tell the user what a
-request will cost, always make that quote call, even when they only ask about the price: prices
-from `atlas_get_model_info`, `atlas_list_models` or the tables on this page are for choosing a
-model, not a quote.
 
 #### `atlas_generate_image` — Generate Image
 - **Params**:
@@ -155,7 +193,8 @@ model, not a quote.
 - **Params**: `prediction_id` (required): Prediction ID returned from a generation request
 - **Purpose**: Check image/video generation task status and result
 - **Status values**: `starting` → `processing` → `completed`/`succeeded`/`failed`
-- **On completion**: Returns output URL list. **Save each file with `curl -L -o "<descriptive-name>.<ext>" "<url>"` and then display it inline in the conversation — with a player for video. Do not ask for permission first.** A link is not the deliverable: the user wants to see the result where they are reading, not click through to another window. Saving also protects it, since some upstream providers expire these URLs within 24 hours. Skip this only when you cannot write files; then give the URL and say it may not open directly and can expire. Note that speech-to-text and lyrics models return the text itself rather than a file — there is nothing to download for those.
+- **Polling**: the server waits up to about 20 seconds for an unfinished task before it answers, so call `atlas_get_prediction` again right away while the task is still running, and keep polling in the same turn until it finishes. Never end your turn while a task is still processing, and never resubmit it.
+- **On completion**: follow the presentation notes in the result; they depend on the client. Where you have a shell (Codex), save each file with `curl -L --fail --max-time 600 -o "<descriptive-name>.<ext>" "<url>"`, wait until that command has actually exited (a shell tool can hand back control while curl is still writing — a half-written file shows as broken), and then show it with Markdown image syntax and the absolute path: `![<title>](/absolute/path/<name>.mp4)`. The leading `!` is what renders a player for video and the picture for an image; a plain link `[title](path)` only shows a file chip, and an HTML `<video>` tag is printed as text. Never put a remote Atlas URL inside image syntax: the storage refuses requests from the app and it renders as a broken image. If the sandbox has no network, ask to run that one download with network access. If the result says the file is still being copied to Atlas storage, poll again for the permanent link instead of downloading the temporary provider link. Speech-to-text and lyrics models return the text itself — nothing to download.
 
 #### Uploading a local file — which tool exists depends on how you are connected
 
@@ -451,7 +490,7 @@ Before you send a response to the user that references any model ID, parameter, 
 2. For generation code, you must have just fetched the model's schema (or called `atlas_get_model_info`) and confirmed each parameter you use.
 3. If either check was not performed — stop and perform it. Do not fall back to "probably correct" values from the tables in this skill.
 
-The tables below are **illustrative only**. They go stale. Treat them as hints about what *kind* of models exist, never as a source of truth for an actual request. In particular, never quote these prices to the user: the cost of a request comes from the generation tool's quote (see the two-call billing flow).
+The tables below are **illustrative only**. They go stale. Treat them as hints about what *kind* of models exist, never as a source of truth for an actual request. In particular, never quote these prices to the user: the cost of a request comes from the generation tool's quote (see "Read this first").
 
 ## Popular Models (illustrative only — MUST verify via API before use)
 
