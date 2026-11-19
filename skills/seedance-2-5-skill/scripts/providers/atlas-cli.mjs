@@ -25,17 +25,24 @@ function parseJson(text, label) {
   catch { throw new Error(`${label} returned invalid JSON: ${source.slice(0, 300)}`); }
 }
 
-// Same reading as the REST adapter: take data only when the top level has no
-// id or status of its own (a prediction can carry a data field of its own).
+// Read a prediction from `atlas ... --json`. Current CLI versions answer with a
+// result envelope { schema_version, outcome, data: { submission_state,
+// prediction: { id, status, outputs: [{ url }] } } }; older ones with the bare
+// prediction, sometimes wrapped in { data }. A top-level id or status wins over
+// a nested data field (a prediction can carry a data field of its own).
 function prediction(value) {
-  const wrapped = value?.data && typeof value.data === "object" && !Array.isArray(value.data)
+  const envelope = value?.schema_version !== undefined && value?.data && typeof value.data === "object" ? value.data : undefined;
+  const view = envelope?.prediction && typeof envelope.prediction === "object" ? envelope.prediction : undefined;
+  const wrapped = !envelope && value?.data && typeof value.data === "object" && !Array.isArray(value.data)
     && value.id === undefined && value.prediction_id === undefined && value.status === undefined;
-  const data = wrapped ? value.data : value;
-  const outputs = data?.outputs ?? data?.output_urls ?? data?.urls ?? data?.output;
+  const data = view ?? (wrapped ? value.data : envelope ?? value);
+  const raw = data?.outputs ?? data?.output_urls ?? data?.urls ?? data?.output;
+  const list = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  const outputs = list.map(item => (typeof item === "string" ? item : item?.url ?? item?.remote_url)).filter(Boolean);
   return {
     ...data,
     id: data?.id ?? data?.prediction_id,
-    outputs: Array.isArray(outputs) ? outputs : (outputs ? [outputs] : undefined),
+    outputs: outputs.length ? outputs : undefined,
   };
 }
 
@@ -113,6 +120,11 @@ export function createAtlasCliExecutor({ config, root, log = console.log }) {
       ? " The job may already have been submitted and billed: check `atlas generate history` (or the generations list in Atlas) before running it again, and ask the user before resubmitting."
       : "";
     if (result.error) throw new Error(`${label} failed: ${result.error.message}${unsure}`);
+    // The CLI stopped at its own spend confirmation (exit 10, outcome confirmation_required): nothing was submitted.
+    const answered = (() => { try { return JSON.parse(result.stdout || ""); } catch { return undefined; } })();
+    if (result.status === 10 || answered?.outcome === "confirmation_required") {
+      throw new Error(`${label} stopped at the Atlas CLI's own spend confirmation, so nothing was submitted. This Atlas CLI does not accept --spend-confirm off; update it or use the atlas-rest adapter.`);
+    }
     if (result.status !== 0) {
       const detail = (result.stderr || result.stdout || "").trim().slice(0, 500);
       throw new Error(`${label} failed${detail ? `: ${detail}` : ""}${unsure}`);
@@ -126,7 +138,8 @@ export function createAtlasCliExecutor({ config, root, log = console.log }) {
 
   function buildGenerateArgs(kind, body) {
     if (!body?.model || !body?.prompt) throw new Error(`atlas-cli ${kind} generation requires model and prompt`);
-    const args = ["generate", kind, body.model, "-p", body.prompt, "--no-wait", "--no-download"];
+    // The runner's own spend plan already has the user's approval for this job, so the CLI must not stop to ask again.
+    const args = ["generate", kind, body.model, "-p", body.prompt, "--no-wait", "--no-download", "--spend-confirm", "off"];
     if (body.duration !== undefined) args.push("--duration", String(body.duration));
     if (body.resolution) args.push("--resolution", body.resolution);
     if (body.ratio) args.push("--aspect-ratio", body.ratio);

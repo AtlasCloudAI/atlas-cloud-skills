@@ -451,6 +451,12 @@ function enforceSpendPlan() {
   );
 }
 
+// Whether a later chain segment starts from segment i's real tail frame.
+function continuesFrom(segs, i) {
+  const next = segs[i + 1];
+  return Boolean(next) && !next.t2v && next.chain !== false;
+}
+
 // Everything this run needs from the config, checked before the approval is
 // spent: a config error must not use up the user's yes (or, in grid mode, stop
 // the run after the storyboard was already billed).
@@ -461,7 +467,11 @@ function validateJob() {
   const frame = (value, where) => {
     if (!Number.isInteger(value) || value < 1 || value > frames) fail(`${where} must be a storyboard panel number from 1 to ${frames}`);
   };
-  // The build folder must really be inside the job directory (not a symlink out of it).
+  // The build folder must really be inside the job directory (not a symlink out of it). Check the
+  // nearest existing folder first, so nothing is created outside the job directory either.
+  let existing = DIR;
+  while (!existsSync(existing) && dirname(existing) !== existing) existing = dirname(existing);
+  if (!insideRoot(realpathSync(ROOT), realpathSync(existing))) fail(`outDir must stay inside the job directory ${ROOT}, but ${existing} resolves to ${realpathSync(existing)}`);
   mkdirSync(DIR, { recursive: true });
   if (!insideRoot(realpathSync(ROOT), realpathSync(DIR))) fail(`outDir must stay inside the job directory ${ROOT}, but ${DIR} resolves to ${realpathSync(DIR)}`);
   const text = value => typeof value === "string" && value.trim() !== "";
@@ -513,6 +523,13 @@ function validateJob() {
     });
   }
   if (MODE === "chain") {
+    // A cached segment whose tail frame is missing (its download failed) can't be continued from:
+    // stop before spending the approval instead of failing on the next segment.
+    CFG.segments.forEach((_, i) => {
+      if (continuesFrom(CFG.segments, i) && existsSync(`${DIR}/seg${i + 1}.mp4`) && !existsSync(`${DIR}/seg${i + 2}.mp4`) && !existsSync(`${DIR}/seg${i + 1}_last.png`)) {
+        fail(`seg${i + 1} is saved but its tail frame ${DIR}/seg${i + 1}_last.png is missing, so seg${i + 2} can't continue from it. Download the tail frame of that prediction again, or tell the user that regenerating seg${i + 1} is billed again`);
+      }
+    });
     CFG.segments.forEach((s, i) => {
       const isT2V = s.t2v || (i === 0 && !s.first && !CFG.grid);
       if (isT2V) return;
@@ -524,6 +541,13 @@ function validateJob() {
     });
   }
   if (MODE === "reference") {
+    // References already in the build folder (for example from a REFS_ONLY run) are checked now too.
+    CFG.refs.forEach((_, i) => {
+      const cached = `${DIR}/ref_${pad(i + 1)}.png`;
+      if (existsSync(cached)) {
+        try { assertReferenceAspect(cached); } catch (error) { fail(error.message); }
+      }
+    });
     CFG.segments.forEach((s, i) => {
       if (s.refs === undefined) return;
       if (!Array.isArray(s.refs) || !s.refs.length) fail(`segments[${i}].refs must be a non-empty array of reference numbers`);
@@ -717,7 +741,7 @@ async function main() {
         if (s.last && CFG.grid) body.last_image = dataUrl(`${b}/frame_${pad(s.last)}.png`); // Anchor the segment endpoint to a grid keyframe.
       }
       const d = await generateVideo(body, `seg${i + 1}`, out, last);
-      if (!d.outputs[1]) {
+      if (!d.outputs[1] && continuesFrom(segs, i)) {
         // Billed, but the next segment can't continue from it: keep it aside so a later run doesn't treat it as done.
         const kept = `${b}/seg${i + 1}.no-tail.mp4`;
         renameSync(out, kept);

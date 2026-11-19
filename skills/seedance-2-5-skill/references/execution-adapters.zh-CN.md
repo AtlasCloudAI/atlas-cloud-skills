@@ -73,7 +73,7 @@ export ATLASCLOUD_API_KEY="<your-key>"
 - 任务配置不能修改 API 主机（确实需要别的主机时，在环境变量里设 `ATLASCLOUD_API_BASE`）；`apiKeyEnv` 只能是 `ATLASCLOUD_*` 变量；可执行文件只从环境变量读取（`FFMPEG_PATH`、`FFPROBE_PATH`、`ATLAS_CLI_COMMAND`）。
 - `outDir`、本地参考音频和本地参考图必须在任务目录内（参考图也可以放在 skill 自己的目录里；符号链接按实际指向判断），参考音频必须真的是 WAV、MP3、AAC、M4A、OGG 或 FLAC，参考图必须真的是 PNG、JPEG 或 WebP。
 
-只有明确选择 CLI 时才设置 `adapter` 为 `atlas-cli`。`atlas-skill` 和 `atlas-mcp` 会被 Node 脚本明确拒绝，让智能体直接执行，避免错误报告执行通道。
+只有明确选择 CLI 时才设置 `adapter` 为 `atlas-cli`。脚本自己的花费计划就是这些任务的同意，所以调用 `atlas generate` 时带 `--spend-confirm off`（需要 Atlas CLI 0.1.44 及以上）。`atlas-skill` 和 `atlas-mcp` 会被 Node 脚本明确拒绝，让智能体直接执行，避免错误报告执行通道。
 
 R2V 任务的 Storyboard 参考图必须符合在线服务当前接受的图片限制。若超出限制，只重新排布同一套有序分镜，不要为此改变用户希望的视频画幅。
 

@@ -129,7 +129,7 @@ Spend and safety limits in the runner:
   symlinks are judged by where they point). An audio reference must really be
   WAV, MP3, AAC, M4A, OGG or FLAC, and a reference image PNG, JPEG or WebP.
 
-Set `adapter` to `atlas-cli` only when the CLI route was explicitly selected.
+Set `adapter` to `atlas-cli` only when the CLI route was explicitly selected. The runner's spend plan is the approval for its jobs, so it calls `atlas generate` with `--spend-confirm off` (Atlas CLI 0.1.44 or later).
 `atlas-skill` and `atlas-mcp` are intentionally rejected by the Node runner so
 the agent can execute them directly rather than misreporting the channel.
 
