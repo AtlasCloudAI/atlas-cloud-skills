@@ -21,7 +21,7 @@
 // A video task is never resubmitted automatically: a failed or silent result
 // stops the run and leaves the retry decision to the user.
 // Requires Node 18+, ffmpeg, and ffprobe. Execution adapters live in scripts/providers/.
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, renameSync, realpathSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, renameSync, realpathSync, lstatSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createHash, randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -91,8 +91,15 @@ function imageMime(buffer, path) {
   if (buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP") return "image/webp";
   throw new Error(`unsupported image format: ${path} (use PNG, JPEG, or WebP)`);
 }
+// Every local image sent to Atlas: resolved through symlinks and kept inside
+// the job directory or the skill folder, so a link planted in the build folder
+// can't slip a private file into a paid request.
 function dataUrl(path) {
-  const buffer = readFileSync(path);
+  const real = realpathSync(path);
+  if (![ROOT, SKILL_DIR].some(root => { try { return insideRoot(realpathSync(root), real); } catch { return false; } })) {
+    throw new Error(`refusing to send ${path}: it resolves to ${real}, outside the job directory`);
+  }
+  const buffer = readFileSync(real);
   return `data:${imageMime(buffer, path)};base64,${buffer.toString("base64")}`;
 }
 function ff(args, label) { const r = spawnSync(FFMPEG, args, { encoding: "utf8", maxBuffer: 64e6 }); if (r.status !== 0) throw new Error(`${label} ffmpeg:\n${(r.stderr || "").split("\n").slice(-12).join("\n")}`); }
@@ -312,8 +319,11 @@ function externalInputs() {
     const source = typeof ref === "string" ? ref : ref?.file || ref?.url;
     if (source && !/^https?:\/\//.test(source)) add(resolve(ROOT, source));
   });
-  for (const name of ["grid.png", ...Array.from({ length: 64 }, (_, i) => `ref_${pad(i + 1)}.png`)]) {
-    if (existsSync(`${DIR}/${name}`)) add(`${DIR}/${name}`);
+  // Cached images the run would send (storyboard, its frames, references, tail frames).
+  try {
+    for (const name of readdirSync(DIR).filter(name => /\.png$/i.test(name)).sort()) add(`${DIR}/${name}`);
+  } catch {
+    // no build folder yet
   }
   const env = Object.fromEntries(Object.keys(process.env).filter(name => /^ATLAS/.test(name)).sort()
     .map(name => [name, createHash("sha256").update(process.env[name] || "").digest("hex").slice(0, 16)]));
@@ -353,17 +363,34 @@ function pendingPath(digest) {
 // The approval id this plan waits for: `<digest>-<nonce>`. A fresh pending
 // approval for the same plan keeps its nonce, so repeated dry runs show the
 // same id; an expired or unreadable one is replaced.
+function validPending(pending) {
+  const age = Date.now() - pending?.createdAt;
+  return typeof pending?.nonce === "string" && /^[0-9a-f]{8}$/.test(pending.nonce)
+    && Number.isFinite(age) && age > -5 * 60 * 1000 && age < APPROVAL_TTL_MS;
+}
+
+// The approvals folder must be a real folder inside the job directory.
+function approvalsDir() {
+  try {
+    if (lstatSync(APPROVALS_DIR).isSymbolicLink()) throw new Error("it is a symbolic link");
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw new Error(`[spend-plan] ${APPROVALS_DIR} can't be used (${error.message}). Nothing was submitted.`);
+  }
+  mkdirSync(APPROVALS_DIR, { recursive: true });
+  return APPROVALS_DIR;
+}
+
 function pendingApprovalId(digest) {
   const path = pendingPath(digest);
   try {
     const pending = JSON.parse(readFileSync(path, "utf8"));
-    if (typeof pending.nonce === "string" && Date.now() - pending.createdAt < APPROVAL_TTL_MS) return `${digest}-${pending.nonce}`;
+    if (validPending(pending)) return `${digest}-${pending.nonce}`;
   } catch {
     // none yet, or unreadable: write a new one below
   }
   const nonce = randomBytes(4).toString("hex");
   try {
-    mkdirSync(APPROVALS_DIR, { recursive: true });
+    approvalsDir();
     writeFileSync(path, JSON.stringify({ nonce, createdAt: Date.now() }));
   } catch (error) {
     throw new Error(`[spend-plan] could not record the plan to approve (${error?.message || error}). Nothing was submitted.`);
@@ -381,9 +408,9 @@ function consumeApproval(digest, approvedId) {
   } catch {
     return false;
   }
-  if (`${digest}-${pending.nonce}` !== approvedId || !(Date.now() - pending.createdAt < APPROVAL_TTL_MS)) return false;
+  if (!validPending(pending) || `${digest}-${pending.nonce}` !== approvedId) return false;
   try {
-    renameSync(path, `${APPROVALS_DIR}/used-${approvedId}.json`);
+    renameSync(`${approvalsDir()}/pending-${digest}.json`, `${APPROVALS_DIR}/used-${approvedId}.json`);
     return true;
   } catch {
     return false;
@@ -434,6 +461,10 @@ function validateJob() {
   const frame = (value, where) => {
     if (!Number.isInteger(value) || value < 1 || value > frames) fail(`${where} must be a storyboard panel number from 1 to ${frames}`);
   };
+  // The build folder must really be inside the job directory (not a symlink out of it).
+  mkdirSync(DIR, { recursive: true });
+  if (!insideRoot(realpathSync(ROOT), realpathSync(DIR))) fail(`outDir must stay inside the job directory ${ROOT}, but ${DIR} resolves to ${realpathSync(DIR)}`);
+  const text = value => typeof value === "string" && value.trim() !== "";
   // ffmpeg crops the storyboard, ffprobe checks every output: missing tools must stop the run before anything is billed.
   for (const [tool, name] of [[FFMPEG, "ffmpeg"], [FFPROBE, "ffprobe"]]) {
     const probe = spawnSync(tool, ["-version"], { encoding: "utf8" });
@@ -443,7 +474,7 @@ function validateJob() {
   if (CFG.grid) {
     const { rows, cols } = CFG.grid;
     if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows <= 0 || cols <= 0) fail("grid.rows and grid.cols must be positive whole numbers");
-    if (typeof CFG.grid.prompt !== "string" && !existsSync(`${DIR}/grid.png`) && !resumePredictionIdFor("grid", CFG.grid.resumePredictionId)) fail("grid.prompt is required to generate the storyboard");
+    if (!text(CFG.grid.prompt) && !existsSync(`${DIR}/grid.png`) && !resumePredictionIdFor("grid", CFG.grid.resumePredictionId)) fail("grid.prompt is required to generate the storyboard");
   }
   if (process.env.GRID_ONLY) return;
   if (CFG.refs !== undefined) {
@@ -451,8 +482,13 @@ function validateJob() {
     CFG.refs.forEach((ref, i) => {
       if (!ref || typeof ref !== "object") fail(`refs[${i}] must be an object with file or prompt`);
       if (ref.file) {
-        try { localReferenceImage(ref.file, `ref${i + 1}`); } catch (error) { fail(error.message); }
-      } else if (typeof ref.prompt !== "string" && !existsSync(`${DIR}/ref_${pad(i + 1)}.png`) && !resumePredictionIdFor(`ref${i + 1}`, ref.resumePredictionId)) {
+        try {
+          const real = localReferenceImage(ref.file, `ref${i + 1}`);
+          if (MODE === "reference") assertReferenceAspect(real);   // a local image's shape is known before anything is billed
+        } catch (error) {
+          fail(error.message);
+        }
+      } else if (!text(ref.prompt) && !existsSync(`${DIR}/ref_${pad(i + 1)}.png`) && !resumePredictionIdFor(`ref${i + 1}`, ref.resumePredictionId)) {
         fail(`refs[${i}] needs file or prompt`);
       }
     });
@@ -462,7 +498,7 @@ function validateJob() {
   if (process.env.REFS_ONLY) return;
   if (MODE === "grid") {
     if (!Array.isArray(CFG.shots) || CFG.shots.length !== frames) fail(`grid mode needs shots.length to equal rows*cols (${frames})`);
-    CFG.shots.forEach((shot, i) => { if (typeof shot !== "string" || !shot.trim()) fail(`shots[${i}] must be a prompt`); });
+    CFG.shots.forEach((shot, i) => { if (!text(shot)) fail(`shots[${i}] must be a prompt`); });
     return;
   }
   if (!nonEmpty(CFG.segments)) fail(`${MODE} mode needs segments[]`);
@@ -681,7 +717,12 @@ async function main() {
         if (s.last && CFG.grid) body.last_image = dataUrl(`${b}/frame_${pad(s.last)}.png`); // Anchor the segment endpoint to a grid keyframe.
       }
       const d = await generateVideo(body, `seg${i + 1}`, out, last);
-      if (!d.outputs[1]) throw new Error(`segment ${i + 1} has no tail frame (outputs[1]); cannot chain`);
+      if (!d.outputs[1]) {
+        // Billed, but the next segment can't continue from it: keep it aside so a later run doesn't treat it as done.
+        const kept = `${b}/seg${i + 1}.no-tail.mp4`;
+        renameSync(out, kept);
+        throw new Error(`segment ${i + 1} completed and was billed but returned no tail frame (outputs[1]), so the chain can't continue (saved as ${kept}). Tell the user; regenerating it is billed again and needs their yes.`);
+      }
       console.log(`[seg${i + 1}] saved (tokens ${d.completion_tokens})`);
     }
     if (!segs.every((_, i) => existsSync(`${b}/seg${i + 1}.mp4`))) { console.log("[stitch] Not all segments are present; skipping."); return; }

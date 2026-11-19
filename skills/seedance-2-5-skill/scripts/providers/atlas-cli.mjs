@@ -25,8 +25,12 @@ function parseJson(text, label) {
   catch { throw new Error(`${label} returned invalid JSON: ${source.slice(0, 300)}`); }
 }
 
+// Same reading as the REST adapter: take data only when the top level has no
+// id or status of its own (a prediction can carry a data field of its own).
 function prediction(value) {
-  const data = value?.data && typeof value.data === "object" ? value.data : value;
+  const wrapped = value?.data && typeof value.data === "object" && !Array.isArray(value.data)
+    && value.id === undefined && value.prediction_id === undefined && value.status === undefined;
+  const data = wrapped ? value.data : value;
   const outputs = data?.outputs ?? data?.output_urls ?? data?.urls ?? data?.output;
   return {
     ...data,

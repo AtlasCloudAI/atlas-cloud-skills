@@ -1,7 +1,7 @@
 // Limits on what a job config may point the runner at. A config file is often
 // copied from a repository or written by an agent, so it must not be able to
 // send the user's credentials, or files, anywhere other than Atlas Cloud.
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 
 export const DEFAULT_API_BASE = "https://api.atlascloud.ai";
@@ -36,11 +36,18 @@ export function insideRoot(root, path) {
   return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
 }
 
-// A local file the runner uploads must sit under the job directory.
+// A local file the runner uploads must sit under the job directory. Symlinks
+// are resolved first, so a link can't point the runner at a file elsewhere.
 export function localFileUnderRoot(root, source, what) {
   const path = resolve(root, source);
-  if (!insideRoot(root, path)) throw new Error(`${what} must be a file inside the job directory ${resolve(root)}, got ${path}`);
-  return path;
+  let real;
+  try {
+    real = realpathSync(path);
+  } catch {
+    throw new Error(`${what} file does not exist: ${path}`);
+  }
+  if (!insideRoot(realpathSync(root), real)) throw new Error(`${what} must be a file inside the job directory ${resolve(root)}, got ${real}`);
+  return real;
 }
 
 // Recognise the audio containers Seedance accepts by their first bytes, so a
