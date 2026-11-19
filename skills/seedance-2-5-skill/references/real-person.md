@@ -60,7 +60,8 @@ blindly:
 
 - On a model that already renders coarse skin, it **overshoots** — faces come out
   dirty or aged.
-- The correct test is cheap: same prompt with and without the suffix. If the
+- The correct test is two generations of the same prompt, with and without the
+  suffix. Both are billed: quote them and get the user's yes first. If the
   version without it already lands, drop it.
 - Record both outcomes in [model profile](model-profile.md), including the
   overshoot. A phrase that overshoots is worse than one that does nothing.

@@ -103,7 +103,8 @@ Spend and safety limits in the runner:
   the user the plan and its estimated cost, and set
   `CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_IMAGES=<images> CONFIRM_SPEND_SECONDS=<seconds>`
   only after they approve it. An approval is spent before the first submission
-  and works once: running the same plan again needs a new yes. Cached outputs
+  and works once: running the same plan again needs a new yes. Any change to the
+  job config (prompts included) or its output folder gives a new plan id. Cached outputs
   and resumed prediction IDs are not counted, because they bill nothing new.
 - The runner accepts only the modes `grid`, `shot-pairs`, `reference` and
   `chain`, and every duration must be a positive whole number of seconds; any
@@ -151,8 +152,8 @@ billable task. Active states are `starting`, `queued`, `pending`, and
 `processing`; successful states are `completed` and `succeeded`; terminal
 failure states are `failed`, `timeout`, and `canceled`. Missing inference time,
 an expired local polling window, an interrupted turn, or a temporary query
-failure never authorizes a replacement task. Only an explicit retry decision
-after a terminal failure may create a new prediction.
+failure never authorizes a replacement task. Only the user's yes to a retry,
+after a terminal failure, may create a new prediction.
 
 All four Atlas execution routes use a 2-second status-query interval in this
 workflow. The agent owns the loop for `atlas-skill` and `atlas-mcp`; the MCP

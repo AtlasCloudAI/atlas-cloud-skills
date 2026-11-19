@@ -1,6 +1,8 @@
 # Troubleshooting
 
-Fix the failed shot or seam rather than restarting a complete sequence.
+Fix the failed shot or seam rather than restarting a complete sequence. Every
+fix below that regenerates something is a new paid generation: tell the user
+what you would rerun and its cost, and wait for their yes.
 
 ## Identity and reference problems
 

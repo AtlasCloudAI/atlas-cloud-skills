@@ -91,8 +91,8 @@ the runner's `[spend-plan]`) and wait for the user's yes before you submit it.
 For a supplied storyboard, display it unless it is already visible in the
 conversation. Check planned order, readable key beats, recurring-subject
 consistency, and content-specific constraints such as anatomy, product form, or
-critical text. Refine a visibly failed board before video generation. Ask the
-user only when a creative choice cannot be inferred.
+critical text. If the board visibly failed, tell the user what is wrong;
+regenerating it is another paid image, so quote it and wait for their yes.
 
 If the route deliberately changes to I2V shot pairs, crop panels only then.
 Inspect the layout first: automatic crops can verify position, not whether the
@@ -324,8 +324,8 @@ Apply these rules to every image and video generation:
 3. Treat `completed` and `succeeded` as successful terminal states. Download and
    inspect the output before starting a dependent stage.
 4. Treat `failed`, `timeout`, and `canceled` as terminal failures. A new task
-   requires an explicit retry decision; report the old ID and possible extra
-   cost first.
+   is the user's decision: report the old ID and the extra cost, and wait for
+   their yes.
 5. A zero or missing processing-time field, delayed output, a local polling
    timeout, a stopped turn, or a temporary status-query error is **not** proof
    of failure. Preserve the ID and resume polling.

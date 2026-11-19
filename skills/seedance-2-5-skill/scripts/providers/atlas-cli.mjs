@@ -104,12 +104,20 @@ export function createAtlasCliExecutor({ config, root, log = console.log }) {
       maxBuffer: 64 * 1024 * 1024,
       env: process.env,
     });
-    if (result.error) throw new Error(`${label} failed: ${result.error.message}`);
+    // A generate command that failed or printed something unreadable may still have submitted the job.
+    const unsure = args[0] === "generate" && args[1] !== "get"
+      ? " The job may already have been submitted and billed: check `atlas generate history` (or the generations list in Atlas) before running it again, and ask the user before resubmitting."
+      : "";
+    if (result.error) throw new Error(`${label} failed: ${result.error.message}${unsure}`);
     if (result.status !== 0) {
       const detail = (result.stderr || result.stdout || "").trim().slice(0, 500);
-      throw new Error(`${label} failed${detail ? `: ${detail}` : ""}`);
+      throw new Error(`${label} failed${detail ? `: ${detail}` : ""}${unsure}`);
     }
-    return parseJson(result.stdout, label);
+    try {
+      return parseJson(result.stdout, label);
+    } catch (error) {
+      throw new Error(`${error instanceof Error ? error.message : String(error)}${unsure}`);
+    }
   }
 
   function buildGenerateArgs(kind, body) {

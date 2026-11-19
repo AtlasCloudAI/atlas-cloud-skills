@@ -66,7 +66,7 @@ export ATLASCLOUD_API_KEY="<your-key>"
 
 脚本的花费和安全限制：
 
-- 提交任何任务之前，先打印一行 `[spend-plan]`，列出每个新的图片任务（分镜宫格、生成的参考图）和每个新的视频任务及计费总秒数；同时打印计划编号；除非 `CONFIRM_SPEND_PLAN` 指明这份计划、且 `CONFIRM_SPEND_IMAGES` 和 `CONFIRM_SPEND_SECONDS` 覆盖它，否则就停在这里。一次同意只在第一次提交前用掉、只能用一次：同一份计划再跑要重新征得同意。默认什么都不放行，`GRID_ONLY` / `REFS_ONLY` 的图片也同样过闸。把计划和预估费用给用户看，用户同意后才设置 `CONFIRM_SPEND_IMAGES=<张数>` 和 `CONFIRM_SPEND_SECONDS=<总秒数>`。已缓存的输出和续查的预测 ID 不计入，因为它们不会产生新费用。
+- 提交任何任务之前，先打印一行 `[spend-plan]`，列出每个新的图片任务（分镜宫格、生成的参考图）和每个新的视频任务及计费总秒数；同时打印计划编号；除非 `CONFIRM_SPEND_PLAN` 指明这份计划、且 `CONFIRM_SPEND_IMAGES` 和 `CONFIRM_SPEND_SECONDS` 覆盖它，否则就停在这里。一次同意只在第一次提交前用掉、只能用一次：同一份计划再跑要重新征得同意。改动任务配置（包括提示词）或输出目录，计划编号都会变。默认什么都不放行，`GRID_ONLY` / `REFS_ONLY` 的图片也同样过闸。把计划和预估费用给用户看，用户同意后才设置 `CONFIRM_SPEND_PLAN=<计划编号> CONFIRM_SPEND_IMAGES=<张数> CONFIRM_SPEND_SECONDS=<总秒数>`。已缓存的输出和续查的预测 ID 不计入，因为它们不会产生新费用。
 - 脚本只认 `grid`、`shot-pairs`、`reference`、`chain` 四种模式，所有时长必须是正整数秒；别的值在扣费前就报错停下。
 - Seedance 2.5 图生视频的画幅跟随输入图（`ratio` 只接受 `adaptive`），所以脚本对它固定发 `adaptive`；拼接时仍按 `video.ratio` 缩放。
 - 视频任务绝不会自动重新提交。已完成但没有原生音轨的视频已经扣过费：脚本把它保存为 `<阶段>.no-audio.mp4` 并停下，要不要再花钱重做由用户决定。`audio.outputRetries` 不再支持。
@@ -90,7 +90,7 @@ R2V 任务的 Storyboard 参考图必须符合在线服务当前接受的图片�
 }
 ```
 
-脚本会恢复轮询和下载，不会再次提交计费任务。`starting`、`queued`、`pending`、`processing` 是进行中状态；`completed`、`succeeded` 是成功终态；`failed`、`timeout`、`canceled` 是失败终态。推理时间缺失、本地轮询窗口结束、对话中断或临时查询失败都不能授权创建替代任务。只有任务明确进入失败终态并作出明确重试决定后，才可以创建新预测任务。
+脚本会恢复轮询和下载，不会再次提交计费任务。`starting`、`queued`、`pending`、`processing` 是进行中状态；`completed`、`succeeded` 是成功终态；`failed`、`timeout`、`canceled` 是失败终态。推理时间缺失、本地轮询窗口结束、对话中断或临时查询失败都不能授权创建替代任务。只有任务明确进入失败终态、并且用户同意重试后，才可以创建新预测任务。
 
 本工作流的四种 Atlas 执行路线都使用 2 秒状态查询周期。`atlas-skill` 和 `atlas-mcp` 的循环由智能体负责，其中 MCP 调用 `atlas_get_prediction`；内置 REST 和 CLI 适配器则在代码中强制执行。REST/CLI 的进度日志仍每 32 秒输出一次，默认本地轮询窗口仍为 900 秒。若底层通用示例使用其他周期，以本工作流的 2 秒规则为准。
 

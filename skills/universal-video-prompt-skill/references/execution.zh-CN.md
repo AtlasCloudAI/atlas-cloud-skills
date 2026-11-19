@@ -29,6 +29,7 @@ Atlas Cloud 的 REST 路线先查 `ATLASCLOUD_API_KEY`，再查兼容别名 `ATL
 
 生成要花钱。以下规则不可省，对每条路线都适用——包括手动跑的。
 
+0. **每一次计费提交都要用户先同意报价**——第一次、后面每个阶段、每次重试都一样
 1. **提交的当下就记下 prediction ID 和逻辑阶段。** 先于一切。没记下的 ID 是一个你找不回来的付费任务
 2. **`starting` / `queued` / `pending` / `processing` 都是进行中。** 轮询同一个 ID，**绝不为同一阶段再提交一次**
 3. **`completed` / `succeeded` 是成功终态。** 下载并检查产物，再启动依赖它的阶段。

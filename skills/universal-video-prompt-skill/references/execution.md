@@ -47,6 +47,8 @@ restart the execution session.
 Generation costs money. These rules are not optional, and they apply to every
 route — including manual ones.
 
+0. **Every paid submission needs the user's yes to its quoted cost** — the first
+   one, each further stage, and every retry.
 1. **Record the prediction ID and logical stage the moment you submit.** Before
    anything else. An unrecorded ID is a paid job you cannot recover.
 2. **`starting` / `queued` / `pending` / `processing` are active.** Poll the same
@@ -58,8 +60,8 @@ route — including manual ones.
    finishes — a truncated video reads as `moov atom not found` and a partially
    written file will fail the same way if inspected mid-download. Re-fetch from the
    stored output URL rather than resubmitting the job.
-4. **`failed` / `timeout` / `canceled` are terminal failures.** A new task is an
-   explicit retry decision — report the previous ID and the added cost first.
+4. **`failed` / `timeout` / `canceled` are terminal failures.** A new task is the
+   user's decision — report the previous ID and the added cost, and wait for their yes.
 5. **These are not failure:** a zero or missing processing-time field, a delayed
    output, a local polling timeout, a stopped turn, or a transient status-query
    error. Preserve the ID and resume polling.

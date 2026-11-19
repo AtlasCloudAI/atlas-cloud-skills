@@ -42,8 +42,9 @@ intentions when they help explain order or motion.
 ```
 
 Inspect panel order, planned beats, essential identity or scene details, and
-task-critical visual elements before R2V. Regenerate the whole board when a
-critical panel is wrong. Submit the accepted board as one image; create a clean
+task-critical visual elements before R2V. When a critical panel is wrong,
+propose regenerating the whole board (a new paid image) and wait for the user's
+yes. Submit the accepted board as one image; create a clean
 copy only if a test generation renders labels or dividers into the video.
 
 ## Clean storyboard: optional retry or I2V crop source

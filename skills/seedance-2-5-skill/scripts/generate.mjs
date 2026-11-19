@@ -159,7 +159,7 @@ function taskRecoveryError(label, id, error) {
   const message = error instanceof Error ? error.message : String(error);
   return new Error(
     `${message} Preserve prediction ${id}; resume it with execution.resumePredictionIds.${label}. `
-    + "Do not submit a replacement unless the task reaches a terminal failure and an explicit retry decision is made.",
+    + "Do not submit a replacement unless the task reaches a terminal failure and the user agrees to a retry.",
   );
 }
 
@@ -263,17 +263,21 @@ function approvedAmount(envName, fallback) {
   return value;
 }
 
-const APPROVALS_FILE = `${DIR}/.spend-approvals.json`;
+// Spent approvals live next to the job config, not in outDir: clearing or
+// renaming the build folder must not make an old approval usable again.
+const APPROVALS_DIR = resolve(ROOT, ".spend-approvals");
 
-// A short id for exactly what this run would bill: models, resolution and every
-// new job with its seconds. The user's approval names this id.
+// A short id for exactly what this run would bill: this job (config path,
+// output folder and the whole config, prompts included), the models and
+// resolution, and every new job with its seconds. The user's approval names it.
 function spendPlanId(freshImages, freshVideos) {
   const plan = {
+    config: CFG_PATH,
+    outDir: DIR,
+    job: CFG,
     mode: MODE,
     imageModel: IMG_MODEL,
-    videoModel: VID_MODEL,
-    refModel: CFG.video?.refModel || PROFILE.video.r2v,
-    t2vModel: CFG.video?.t2vModel || PROFILE.video.t2v,
+    videoModels: videoModels(),
     resolution: V.resolution,
     audio: V.generate_audio,
     images: freshImages.map(job => job.label),
@@ -282,12 +286,26 @@ function spendPlanId(freshImages, freshVideos) {
   return createHash("sha256").update(JSON.stringify(plan)).digest("hex").slice(0, 12);
 }
 
-function usedApprovals() {
+function videoModels() {
+  if (MODE === "reference") return [CFG.video?.refModel || PROFILE.video.r2v];
+  if (MODE === "chain") return [...new Set([VID_MODEL, CFG.video?.t2vModel || PROFILE.video.t2v])];
+  return [VID_MODEL];
+}
+
+// Record the approval as spent. The marker file is created exclusively, so two
+// runs started at once can't both use the same approval.
+function spendApproval(id) {
   try {
-    const used = JSON.parse(readFileSync(APPROVALS_FILE, "utf8"));
-    return Array.isArray(used) ? used : [];
-  } catch {
-    return [];
+    mkdirSync(APPROVALS_DIR, { recursive: true });
+    writeFileSync(`${APPROVALS_DIR}/${id}`, `${new Date().toISOString()}\n`, { flag: "wx" });
+  } catch (error) {
+    if (error?.code === "EEXIST") {
+      throw new Error(
+        `[spend-plan] approval for plan ${id} was already used by an earlier run of this job, so it does not cover this one. Nothing was submitted. `
+        + "Whatever that earlier run submitted may already be billed: tell the user what this run would resubmit and get a new yes before running again.",
+      );
+    }
+    throw new Error(`[spend-plan] could not record the approval for plan ${id} (${error?.message || error}). Nothing was submitted.`);
   }
 }
 
@@ -300,7 +318,7 @@ function enforceSpendPlan() {
   const resumed = imageJobs.length - freshImages.length + jobs.length - fresh.length;
   console.log(
     `[spend-plan] ${freshImages.length} new image job(s) with ${IMG_MODEL}: ${freshImages.map(job => job.label).join(", ") || "none"}; `
-    + `${fresh.length} new video job(s), ${seconds}s total at ${V.resolution}: ${fresh.map(job => `${job.label}=${job.seconds}s`).join(", ") || "none"}`
+    + `${fresh.length} new video job(s) with ${videoModels().join(" / ")}, ${seconds}s total at ${V.resolution}: ${fresh.map(job => `${job.label}=${job.seconds}s`).join(", ") || "none"}`
     + `${resumed ? `; ${resumed} resumed (already billed)` : ""}`,
   );
   if (freshImages.length === 0 && fresh.length === 0) return;   // nothing new is billed
@@ -315,15 +333,43 @@ function enforceSpendPlan() {
       + `Show the user the plan above and its estimated cost; after they approve it, run again with CONFIRM_SPEND_PLAN=${id} CONFIRM_SPEND_IMAGES=${freshImages.length} CONFIRM_SPEND_SECONDS=${seconds}.`,
     );
   }
-  const used = usedApprovals();
-  if (used.includes(id)) {
-    throw new Error(
-      `[spend-plan] approval for plan ${id} was already used by an earlier run of this job, so it does not cover this one. Nothing was submitted. `
-      + "Anything that earlier run submitted may already be billed: tell the user what is being resubmitted and get a new yes before running again.",
-    );
-  }
   // Spend the approval before the first submission, so a crash or a re-run can't reuse it.
-  writeFileSync(APPROVALS_FILE, JSON.stringify([...used, id]));
+  spendApproval(id);
+}
+
+// Everything this run needs from the config, checked before the approval is
+// spent: a config error must not use up the user's yes (or, in grid mode, stop
+// the run after the storyboard was already billed).
+function validateJob() {
+  const nonEmpty = value => Array.isArray(value) && value.length > 0;
+  const fail = message => { throw new Error(`${message}. Nothing was submitted.`); };
+  if ((MODE === "grid" || MODE === "shot-pairs") && !CFG.grid) fail(`${MODE} mode needs grid`);
+  if (CFG.grid) {
+    const { rows, cols } = CFG.grid;
+    if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows <= 0 || cols <= 0) fail("grid.rows and grid.cols must be positive whole numbers");
+  }
+  if (process.env.GRID_ONLY) return;
+  if (MODE === "reference" && !nonEmpty(CFG.refs)) fail("reference mode needs refs[]");
+  if (process.env.REFS_ONLY) return;
+  if (MODE === "grid") {
+    const N = CFG.grid.rows * CFG.grid.cols;
+    if (!Array.isArray(CFG.shots) || CFG.shots.length !== N) fail(`grid mode needs shots.length to equal rows*cols (${N})`);
+  } else if (!nonEmpty(CFG.segments)) {
+    fail(`${MODE} mode needs segments[]`);
+  }
+  if (MODE === "shot-pairs") {
+    CFG.segments.forEach((s, i) => { if (!Number.isInteger(s?.first)) fail(`shot-pairs segment ${i + 1} needs a first keyframe index`); });
+  }
+  if (MODE === "reference") {
+    (AUDIO.references || []).forEach((ref, i) => {
+      const source = typeof ref === "string" ? ref : ref?.file || ref?.url;
+      const what = `input audio reference ${i + 1}`;
+      if (!source) fail(`${what} needs file or url`);
+      if (/^https?:\/\//.test(source)) return;
+      if (!existsSync(resolve(ROOT, source))) fail(`${what} file does not exist: ${resolve(ROOT, source)}`);
+      readAudioFile(ROOT, source, what);   // inside the job directory and really audio
+    });
+  }
 }
 
 async function genGridAndSplit(b) {
@@ -428,6 +474,7 @@ async function main() {
   if (AUDIO.references !== undefined && !Array.isArray(AUDIO.references)) throw new Error("audio.references must be an array");
   if (AUDIO.references?.length && MODE !== "reference") throw new Error("audio.references is supported only in reference-to-video mode; use native-audio prompt markers for other modes.");
   overlayFilter();   // reject a bad filter before anything is billed
+  validateJob();        // config errors stop here, before the approval is spent
   enforceSpendPlan();   // before any submission, images included, in every run mode
   const N = CFG.grid ? await genGridAndSplit(b) : 0;   // Grid is optional: a text-to-video chain needs none.
   if (process.env.GRID_ONLY) {
