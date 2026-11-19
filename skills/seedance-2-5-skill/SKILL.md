@@ -84,15 +84,15 @@ actually renders an unwanted divider, number, caption, or multi-panel layout.
 
 When a multi-shot request has no storyboard, use the Seedream template in
 [prompt templates](references/prompt-templates.md) to create one board.
-**Display that board in the host UI, inspect it yourself, then continue to
-Seedance R2V when it passes review.** Showing the board is a progress update,
-not a user-approval gate.
+**Display that board in the host UI and inspect it yourself.** Generating the
+board and every video after it are separate paid steps: quote each one (or show
+the runner's `[spend-plan]`) and wait for the user's yes before you submit it.
 
 For a supplied storyboard, display it unless it is already visible in the
 conversation. Check planned order, readable key beats, recurring-subject
 consistency, and content-specific constraints such as anatomy, product form, or
-critical text. Refine a visibly failed board before video generation. Ask the
-user only when a creative choice cannot be inferred.
+critical text. If the board visibly failed, tell the user what is wrong;
+regenerating it is another paid image, so quote it and wait for their yes.
 
 If the route deliberately changes to I2V shot pairs, crop panels only then.
 Inspect the layout first: automatic crops can verify position, not whether the
@@ -228,8 +228,9 @@ Read the reference matching the job:
    then verify it fits the chosen route.
 3. If the board passes review, quote one representative video pass (model,
    duration, resolution, estimated cost) and wait for the user's explicit yes in
-   a new message before submitting it. Otherwise refine or regenerate the board
-   first. Quote and confirm every later billable segment the same way.
+   a new message before submitting it. Otherwise tell the user what is wrong with
+   the board; regenerating it is another paid image, so quote it and wait for
+   their yes. Quote and confirm every later billable segment the same way.
 4. Review identity, locks, stage end states, composition, motion, seam, and audio
    in that order, and stop at the first failure — later checks are wasted effort
    on a wrong identity. Regenerate only the failed shot or segment.
@@ -324,8 +325,8 @@ Apply these rules to every image and video generation:
 3. Treat `completed` and `succeeded` as successful terminal states. Download and
    inspect the output before starting a dependent stage.
 4. Treat `failed`, `timeout`, and `canceled` as terminal failures. A new task
-   requires an explicit retry decision; report the old ID and possible extra
-   cost first.
+   is the user's decision: report the old ID and the extra cost, and wait for
+   their yes.
 5. A zero or missing processing-time field, delayed output, a local polling
    timeout, a stopped turn, or a temporary status-query error is **not** proof
    of failure. Preserve the ID and resume polling.
@@ -360,10 +361,12 @@ CLIPS_MAX=1 node scripts/generate.mjs scripts/myjob.json
 SEGS_MAX=1 node scripts/generate.mjs scripts/myjob.json
 
 # Every run, GRID_ONLY and REFS_ONLY included, first prints a [spend-plan] line
-# (new image jobs and billed video seconds) and stops there. Show the user that
-# plan and its estimated cost; after they approve, run again with the totals.
-CONFIRM_SPEND_IMAGES=1 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
-CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
+# (new image jobs, billed video seconds and a plan id) and stops there. Show the
+# user that plan and its estimated cost; after they approve, run again with the
+# exact values the runner printed. An approval works once: re-running the same
+# plan (for example after a failed segment) needs the user's yes again.
+CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_IMAGES=1 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
+CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
 ```
 
 ```json

@@ -94,6 +94,13 @@ capability if it needs mentioning at all.
 2. Read the enumerated parameters from that page rather than from doc examples.
    Parameter names sometimes differ between an external reference and a live page;
    when they disagree, the live page wins.
+   ⚠️ **For a value outside the published table, the quote's error decides —
+   never a real submission.** A model page's own table can be narrower than what
+   the service accepts. To check the value you actually want, ask for a quote
+   (the generation tool without `confirmed`): the Atlas MCP server validates
+   every parameter against the model's live schema at that step and rejects an
+   unsupported value with an error, spending nothing. A real submission that is
+   accepted runs and is charged.
 3. Confirm which task types are exposed. Text-to-video availability says nothing
    about whether editing or extension is available.
 4. Record what you found in [model profile](model-profile.md) so the next run does

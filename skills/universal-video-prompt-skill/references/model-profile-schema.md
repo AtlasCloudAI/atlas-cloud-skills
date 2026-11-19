@@ -167,7 +167,8 @@ table, not only the videos.
 
 The highest-information single test: run one spec at `stages` and at
 `second-level`, measure the drift, and fill three fields at once — timing
-adherence, recommended granularity, and usually one failure mode.
+adherence, recommended granularity, and usually one failure mode. Both runs are
+billed: quote them and get the user's yes first.
 
 ## Related
 

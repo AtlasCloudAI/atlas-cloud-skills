@@ -102,6 +102,9 @@ the kind of thing a 2.0-tuned negative list would now be redundantly fighting.
 
 ### First probes to run, in order
 
+Each probe below is a real, billed generation: quote it and get the user's yes
+before running it, and stop as soon as the question is settled.
+
 1. **Reference addressing** — one generation with two bound references. Everything
    else is blocked on getting this right.
 2. **Timing adherence** — the same spec at `stages` and at `second-level`; measure

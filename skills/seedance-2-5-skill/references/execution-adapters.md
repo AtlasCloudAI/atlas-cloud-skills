@@ -96,13 +96,23 @@ Spend and safety limits in the runner:
 
 - Before anything is submitted it prints a `[spend-plan]` line with every new
   image job (storyboard grid, generated references) and every new video job
-  with the total billed seconds, and it stops there unless
-  `CONFIRM_SPEND_IMAGES` and `CONFIRM_SPEND_SECONDS` cover that plan. Nothing
-  is approved by default, and `GRID_ONLY` / `REFS_ONLY` runs are gated the same
-  way for their images. Show the user the plan and its estimated cost, and set
-  `CONFIRM_SPEND_IMAGES=<images>` and `CONFIRM_SPEND_SECONDS=<seconds>` only
-  after they approve it. Cached outputs and resumed prediction IDs are not
-  counted, because they bill nothing new.
+  with the total billed seconds, plus a plan id, and it stops there unless
+  `CONFIRM_SPEND_PLAN` names that plan and `CONFIRM_SPEND_IMAGES` /
+  `CONFIRM_SPEND_SECONDS` cover it. Nothing is approved by default, and
+  `GRID_ONLY` / `REFS_ONLY` runs are gated the same way for their images. Show
+  the user the plan and its estimated cost, and set
+  `CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_IMAGES=<images> CONFIRM_SPEND_SECONDS=<seconds>`
+  only after they approve it. An approval is spent before the first submission
+  and works once: running the same plan again needs a new yes. Any change to the
+  job config (prompts included), its output folder, its local input files or
+  the Atlas key/endpoint gives a new plan id. The id printed by the run includes
+  a one-time code kept in `.spend-approvals/` next to the config; an approval
+  works for one run within 24 hours, and if that folder is moved or cleaned
+  the old approval no longer works. Cached outputs
+  and resumed prediction IDs are not counted, because they bill nothing new.
+- The runner accepts only the modes `grid`, `shot-pairs`, `reference` and
+  `chain`, and every duration must be a positive whole number of seconds; any
+  other value stops the run before anything is billed.
 - Seedance 2.5 image-to-video takes its frame shape from the input image (its
   `ratio` accepts only `adaptive`), so the runner sends `adaptive` there; the
   stitch step still scales to `video.ratio`.
@@ -114,10 +124,12 @@ Spend and safety limits in the runner:
   environment if you really need another one), `apiKeyEnv` must name an
   `ATLASCLOUD_*` variable, and executables come only from the environment
   (`FFMPEG_PATH`, `FFPROBE_PATH`, `ATLAS_CLI_COMMAND`).
-- `outDir` and local audio references must stay inside the job directory, and
-  an audio reference must really be WAV, MP3, AAC, M4A, OGG or FLAC.
+- `outDir`, local audio references and local reference images must stay inside
+  the job directory (reference images may also sit in the skill's own folder;
+  symlinks are judged by where they point). An audio reference must really be
+  WAV, MP3, AAC, M4A, OGG or FLAC, and a reference image PNG, JPEG or WebP.
 
-Set `adapter` to `atlas-cli` only when the CLI route was explicitly selected.
+Set `adapter` to `atlas-cli` only when the CLI route was explicitly selected. The runner's spend plan is the approval for its jobs, so it calls `atlas generate` with `--spend-confirm off` (Atlas CLI 0.1.44 or later).
 `atlas-skill` and `atlas-mcp` are intentionally rejected by the Node runner so
 the agent can execute them directly rather than misreporting the channel.
 
@@ -146,8 +158,8 @@ billable task. Active states are `starting`, `queued`, `pending`, and
 `processing`; successful states are `completed` and `succeeded`; terminal
 failure states are `failed`, `timeout`, and `canceled`. Missing inference time,
 an expired local polling window, an interrupted turn, or a temporary query
-failure never authorizes a replacement task. Only an explicit retry decision
-after a terminal failure may create a new prediction.
+failure never authorizes a replacement task. Only the user's yes to a retry,
+after a terminal failure, may create a new prediction.
 
 All four Atlas execution routes use a 2-second status-query interval in this
 workflow. The agent owns the loop for `atlas-skill` and `atlas-mcp`; the MCP

@@ -32,8 +32,9 @@ Last verified: 2026-08-03 · Provider: Atlas Cloud
 ⚠️ **The model page contradicts itself on duration.** Header text says `5-15s`,
 the "Why Choose" section says `5s or 10s`, the parameter table says
 `8 (default), 5-10`. The parameter table also omits `16:9` from `ratio` while the
-playground offers it. **Submission is the only authority** — 15s and 16:9 both
-work. Do not trust a parameter table over a live test.
+playground offers it. 15s and 16:9 both work. To check a value, ask for a quote
+(the generation tool without `confirmed`): the quote validates it against the
+live schema and spends nothing. Never submit a paid job just to test a value.
 
 ### Bias layer
 

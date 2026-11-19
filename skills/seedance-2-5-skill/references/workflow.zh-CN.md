@@ -42,9 +42,9 @@
 
 已有 Storyboard 默认直接作为 R2V 参考。Seedance 通常能理解格子顺序；不需要预先删掉编号、格线、箭头或备注。只有实测视频把这些元素渲染进最终画面时，才生成清理版。
 
-没有 Storyboard 时，使用 [中文提示词模板](prompt-templates.zh-CN.md) 中的 Seedream 模板生成一张。**必须在宿主界面展示图片，自己检查后再继续 R2V。** 这只是中间状态展示，不需要等待用户确认。
+没有 Storyboard 时，使用 [中文提示词模板](prompt-templates.zh-CN.md) 中的 Seedream 模板生成一张。**必须在宿主界面展示图片并自己检查。** 生成分镜图和后面的每段视频都是单独计费的步骤：每一步都先报价（或给用户看脚本打印的 `[spend-plan]`），等用户明确同意后再提交。
 
-检查格子顺序、关键节奏是否可读、重复主体是否一致，以及该任务真正重要的结构条件，例如人物解剖、产品形态或关键文字。发现明显错误先自行重做；只有创意取舍无法推断时才询问用户。
+检查格子顺序、关键节奏是否可读、重复主体是否一致，以及该任务真正重要的结构条件，例如人物解剖、产品形态或关键文字。发现明显错误时告诉用户哪里不对；重做是又一张计费图片，先报价、等用户同意。
 
 只有明确改为 I2V 首尾帧路线时才切格。切格前先检查布局；自动切图只能确认位置，不能判断模型是否真的画对了每格内容。
 
@@ -182,7 +182,7 @@
 1. 提交后立即记录预测 ID 和对应创作阶段。
 2. `starting`、`queued`、`pending`、`processing` 都是进行中状态；必须持续查询同一 ID（查询间隔见下文），禁止为同一阶段再提交任务。
 3. `completed`、`succeeded` 是成功终态；必须下载并检查输出，才能开始依赖它的下一阶段。
-4. `failed`、`timeout`、`canceled` 是失败终态；新任务必须经过明确重试决定，并先报告原任务 ID 和可能增加的费用。
+4. `failed`、`timeout`、`canceled` 是失败终态；要不要建新任务由用户决定：先报告原任务 ID 和可能增加的费用，等用户同意。
 5. 推理时间为 0 或缺失、输出延迟、本地轮询超时、对话中断、临时查询失败，都不能证明任务失败；必须保留 ID 并恢复轮询。
 6. 用户说“继续”只表示恢复原任务，不代表允许重试。Storyboard 仍在生成时，禁止提交依赖它的视频任务。
 
@@ -196,10 +196,10 @@ Skill、CLI、REST 路线每 2 秒查询一次：`atlas-skill` 每 2 秒用同�
 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
 CLIPS_MAX=1 node scripts/generate.mjs scripts/myjob.json
 SEGS_MAX=1 node scripts/generate.mjs scripts/myjob.json
-# 每次运行（包括 GRID_ONLY、REFS_ONLY）都会先打印 [spend-plan] 行（新图片任务数和计费视频秒数）并停下；
-# 把计划和预估费用给用户看，同意后再带上对应总数重跑
-CONFIRM_SPEND_IMAGES=1 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
-CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
+# 每次运行（包括 GRID_ONLY、REFS_ONLY）都会先打印 [spend-plan] 行（新图片任务数、计费视频秒数和计划编号）并停下；
+# 把计划和预估费用给用户看，同意后按脚本打印的值原样重跑。一次同意只能用一次：同一份计划再跑（比如某段失败后）要重新征得同意
+CONFIRM_SPEND_PLAN=<计划编号> CONFIRM_SPEND_IMAGES=1 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
+CONFIRM_SPEND_PLAN=<计划编号> CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
 ```
 
 脚本输出 `[storyboard-preview]` 绝对路径时，必须把该图展示给用户并自行检查，再继续视频任务。详细执行规则见 [中文执行适配层](execution-adapters.zh-CN.md)。

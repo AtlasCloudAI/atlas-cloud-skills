@@ -43,7 +43,8 @@ Two of these deserve special handling.
 ### Anti-default suffixes: overshoot is a real failure
 
 Do not port an anti-default phrase without checking the target's baseline. The
-test is cheap: generate once with the phrase and once without, on the same spec.
+test is two generations of the same spec, once with the phrase and once without;
+both are billed, so quote them and get the user's yes first.
 If the version *without* it is already at or past the target, the phrase is
 counterproductive on this model. Record both results in the profile — the
 "ineffective or overshooting" field exists for this.
@@ -72,7 +73,8 @@ These are not misunderstandings; they are hard limits on what the interface take
 
 No profile means no assumptions. Run the smallest test that settles the question,
 then record it. Order probes cheapest-first and stop as soon as the spec is
-satisfiable:
+satisfiable. A probe that generates is billed like any other job: quote it and
+get the user's yes before running it. In order:
 
 1. **Read what is published** — reference limits, durations, resolutions. Verify
    against the live model page rather than a doc example; treat a 200 response as
