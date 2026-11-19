@@ -84,9 +84,9 @@ actually renders an unwanted divider, number, caption, or multi-panel layout.
 
 When a multi-shot request has no storyboard, use the Seedream template in
 [prompt templates](references/prompt-templates.md) to create one board.
-**Display that board in the host UI, inspect it yourself, then continue to
-Seedance R2V when it passes review.** Showing the board is a progress update,
-not a user-approval gate.
+**Display that board in the host UI and inspect it yourself.** Generating the
+board and every video after it are separate paid steps: quote each one (or show
+the runner's `[spend-plan]`) and wait for the user's yes before you submit it.
 
 For a supplied storyboard, display it unless it is already visible in the
 conversation. Check planned order, readable key beats, recurring-subject
@@ -360,10 +360,12 @@ CLIPS_MAX=1 node scripts/generate.mjs scripts/myjob.json
 SEGS_MAX=1 node scripts/generate.mjs scripts/myjob.json
 
 # Every run, GRID_ONLY and REFS_ONLY included, first prints a [spend-plan] line
-# (new image jobs and billed video seconds) and stops there. Show the user that
-# plan and its estimated cost; after they approve, run again with the totals.
-CONFIRM_SPEND_IMAGES=1 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
-CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
+# (new image jobs, billed video seconds and a plan id) and stops there. Show the
+# user that plan and its estimated cost; after they approve, run again with the
+# exact values the runner printed. An approval works once: re-running the same
+# plan (for example after a failed segment) needs the user's yes again.
+CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_IMAGES=1 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
+CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
 ```
 
 ```json

@@ -28,7 +28,7 @@ Fix the failed shot or seam rather than restarting a complete sequence.
 | Hard cut feels arbitrary | No planned visual or audio relationship | Add a match cut, occlusion, cutaway, or strong beat before the cut |
 | Dissolve looks muddy | Two unrelated compositions are blended | Use a hard, match, or occlusion cut; reserve dissolves for true time or place changes |
 | Input audio fails | A supplied reference audio file or URL was rejected | Fix or replace `audio.references`; do not expect silent removal of the input audio |
-| Output audio fails after retries | Seedance returned no audio stream or reported audio-generation failure | Inspect the request and rerun that segment with `generate_audio:true` rather than silently falling back to silent video |
+| Output audio is missing | Seedance returned no audio stream or reported audio-generation failure | The segment was already billed. Inspect the request, tell the user, and only after their yes rerun that segment with `generate_audio:true`; never fall back silently to silent video |
 | Native audio ends with a click | Generated clip audio is truncated | Regenerate the segment with native audio; add a short fade only after the new generation is acceptable |
 
 ## Multi-reference problems

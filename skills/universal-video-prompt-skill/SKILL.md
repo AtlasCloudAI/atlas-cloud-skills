@@ -199,12 +199,14 @@ target model works, and a user-selected provider always wins.
 
 Whatever the route, generation costs money and these rules hold:
 
+0. Every paid submission — the first one, each further stage, and every retry —
+   needs the user's explicit yes to its quoted cost first.
 1. Record the prediction ID and stage the moment you submit.
 2. `starting` / `queued` / `pending` / `processing` are active. Poll the same ID;
    never submit a second task for the same stage.
 3. Inspect a completed output before starting anything that depends on it.
-4. `failed` / `timeout` / `canceled` are terminal. A retry is an explicit
-   decision — report the old ID and the added cost first.
+4. `failed` / `timeout` / `canceled` are terminal. A retry is the user's
+   decision — report the old ID and the added cost, and wait for their yes.
 5. Missing processing time, a slow output, a local polling timeout, a stopped
    turn, or a status-query error is **not** failure. Keep the ID and resume.
 6. `continue` means resume the existing task. It is never permission to retry.

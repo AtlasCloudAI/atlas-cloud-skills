@@ -9,17 +9,20 @@
 //   node generate.mjs <config.json>
 //   GRID_ONLY=1 node generate.mjs <config.json>   # Generate grid and crop frames only; display grid.png and inspect it before video work.
 //   CLIPS_MAX=1 node generate.mjs <config.json>   # In grid mode, run only the first N clips as a quality gate.
-//   CONFIRM_SPEND_IMAGES=1 CONFIRM_SPEND_SECONDS=40 node generate.mjs <config.json>   # Approve 1 new image and up to 40 billed video seconds for this run.
+//   CONFIRM_SPEND_PLAN=<id> CONFIRM_SPEND_IMAGES=1 CONFIRM_SPEND_SECONDS=40 node generate.mjs <config.json>   # Run the plan the user approved.
 //
 // Every run (GRID_ONLY and REFS_ONLY included) prints a [spend-plan] line with
-// the new image jobs and billed video seconds before it submits anything, and
-// stops there unless CONFIRM_SPEND_IMAGES and CONFIRM_SPEND_SECONDS cover the
-// plan. Nothing is approved by default: set them only after the user has
-// approved that plan and its cost.
+// the new image jobs and billed video seconds, and a plan id, before it submits
+// anything, and stops there unless CONFIRM_SPEND_PLAN names that exact plan and
+// CONFIRM_SPEND_IMAGES / CONFIRM_SPEND_SECONDS cover it. Nothing is approved by
+// default: set them only after the user has approved that plan and its cost.
+// An approval is used once: a later run of the same plan (for example after a
+// segment failed) needs the user's yes again.
 // A video task is never resubmitted automatically: a failed or silent result
 // stops the run and leaves the retry decision to the user.
 // Requires Node 18+, ffmpeg, and ffprobe. Execution adapters live in scripts/providers/.
-import { readFileSync, mkdirSync, existsSync, copyFileSync, renameSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, renameSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { createExecutor, resolveModelProfile } from "./providers/index.mjs";
@@ -37,12 +40,36 @@ for (const field of ["ffmpeg", "ffprobe"]) {
 const FFMPEG = process.env.FFMPEG_PATH || "ffmpeg";
 const FFPROBE = process.env.FFPROBE_PATH || "ffprobe";
 const MODE = CFG.mode || "grid";
+// The spend plan and the run must agree on what a mode submits, so an unknown
+// mode (a typo such as "Grid") stops here instead of falling through to the
+// grid branch with a plan that counted nothing.
+const MODES = ["grid", "shot-pairs", "reference", "chain"];
+if (!MODES.includes(MODE)) throw new Error(`mode must be one of ${MODES.join(", ")}, got ${JSON.stringify(CFG.mode)}. Nothing was submitted.`);
+if (CFG.refs !== undefined && !Array.isArray(CFG.refs)) throw new Error("refs must be an array. Nothing was submitted.");
+if (CFG.segments !== undefined && !Array.isArray(CFG.segments)) throw new Error("segments must be an array. Nothing was submitted.");
 const PROFILE = resolveModelProfile(CFG.modelProfile);
 const EXECUTOR = createExecutor({ config: CFG, root: ROOT, log: console.log });
 const IMG_MODEL = CFG.grid?.model || PROFILE.image;
 const VID_MODEL = CFG.video?.model || PROFILE.video.i2v;
 const V = { resolution: "1080p", ratio: "9:16", duration: 5, generate_audio: true, watermark: false, ...CFG.video };
 const AUDIO = CFG.audio || {};
+// Every billed duration is a positive whole number of seconds: the spend plan
+// counts exactly what is submitted, so "15s", null, 0 or -15 stop the run.
+function billedSeconds(value, where) {
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    throw new Error(`${where} must be a positive whole number of seconds, got ${JSON.stringify(value)}. Nothing was submitted.`);
+  }
+  return value;
+}
+billedSeconds(V.duration, "video.duration");
+(CFG.segments || []).forEach((s, i) => { if (s?.duration !== undefined) billedSeconds(s.duration, `segments[${i}].duration`); });
+// How many jobs a capped run submits; the plan and the run use the same count.
+function runCount(envName, total) {
+  if (!process.env[envName]) return total;
+  const n = Number(process.env[envName]);
+  if (!Number.isInteger(n) || n < 0) throw new Error(`${envName} must be a non-negative whole number, got ${JSON.stringify(process.env[envName])}`);
+  return Math.min(total, n);
+}
 if (AUDIO.outputRetries) console.warn("[config] audio.outputRetries is no longer supported: a video without native audio has already been billed, so the runner stops instead of resubmitting it.");
 // What a run may bill without explicit approval: nothing. Every new image and
 // every billed video second needs CONFIRM_SPEND_IMAGES / CONFIRM_SPEND_SECONDS.
@@ -215,14 +242,13 @@ function plannedVideoJobs() {
     const resumed = Boolean(resumePredictionIdFor(label, explicitResumeId));
     jobs.push({ label, seconds: Number(seconds) || 0, resumed });
   };
-  const limit = (envName, total) => Math.min(total, process.env[envName] ? Math.max(0, +process.env[envName]) : total);
   if (MODE === "grid") {
     const total = (CFG.grid?.rows || 0) * (CFG.grid?.cols || 0);
-    for (let i = 0; i < limit("CLIPS_MAX", total); i++) add(`clip${i + 1}`, `${DIR}/clip${i + 1}.mp4`, V.duration);
+    for (let i = 0; i < runCount("CLIPS_MAX", total); i++) add(`clip${i + 1}`, `${DIR}/clip${i + 1}.mp4`, V.duration);
   } else {
     const segs = Array.isArray(CFG.segments) ? CFG.segments : [];
     const prefix = MODE === "shot-pairs" ? "shot" : "seg";
-    for (let i = 0; i < limit("SEGS_MAX", segs.length); i++) {
+    for (let i = 0; i < runCount("SEGS_MAX", segs.length); i++) {
       const s = segs[i] || {};
       add(`${prefix}${i + 1}`, `${DIR}/${prefix}${i + 1}.mp4`, s.duration || V.duration, MODE === "reference" ? s.resumePredictionId : undefined);   // only reference mode reads segment.resumePredictionId
     }
@@ -237,6 +263,34 @@ function approvedAmount(envName, fallback) {
   return value;
 }
 
+const APPROVALS_FILE = `${DIR}/.spend-approvals.json`;
+
+// A short id for exactly what this run would bill: models, resolution and every
+// new job with its seconds. The user's approval names this id.
+function spendPlanId(freshImages, freshVideos) {
+  const plan = {
+    mode: MODE,
+    imageModel: IMG_MODEL,
+    videoModel: VID_MODEL,
+    refModel: CFG.video?.refModel || PROFILE.video.r2v,
+    t2vModel: CFG.video?.t2vModel || PROFILE.video.t2v,
+    resolution: V.resolution,
+    audio: V.generate_audio,
+    images: freshImages.map(job => job.label),
+    videos: freshVideos.map(job => `${job.label}=${job.seconds}`),
+  };
+  return createHash("sha256").update(JSON.stringify(plan)).digest("hex").slice(0, 12);
+}
+
+function usedApprovals() {
+  try {
+    const used = JSON.parse(readFileSync(APPROVALS_FILE, "utf8"));
+    return Array.isArray(used) ? used : [];
+  } catch {
+    return [];
+  }
+}
+
 function enforceSpendPlan() {
   const imageJobs = plannedImageJobs();
   const freshImages = imageJobs.filter(job => !job.resumed);
@@ -249,14 +303,27 @@ function enforceSpendPlan() {
     + `${fresh.length} new video job(s), ${seconds}s total at ${V.resolution}: ${fresh.map(job => `${job.label}=${job.seconds}s`).join(", ") || "none"}`
     + `${resumed ? `; ${resumed} resumed (already billed)` : ""}`,
   );
+  if (freshImages.length === 0 && fresh.length === 0) return;   // nothing new is billed
+  const id = spendPlanId(freshImages, fresh);
+  console.log(`[spend-plan] plan id ${id}`);
   const approvedImages = approvedAmount("CONFIRM_SPEND_IMAGES", UNCONFIRMED_SPEND_IMAGES);
   const approvedSeconds = approvedAmount("CONFIRM_SPEND_SECONDS", UNCONFIRMED_SPEND_SECONDS);
-  if (freshImages.length > approvedImages || seconds > approvedSeconds) {
+  const approvedPlan = (process.env.CONFIRM_SPEND_PLAN || "").trim();
+  if (approvedPlan !== id || freshImages.length > approvedImages || seconds > approvedSeconds) {
     throw new Error(
-      `[spend-plan] this run would submit ${freshImages.length} new image job(s) and ${seconds} billed video seconds; approved: ${approvedImages} image(s), ${approvedSeconds}s. Nothing was submitted. `
-      + `Show the user the plan above and its estimated cost; after they approve it, run again with CONFIRM_SPEND_IMAGES=${freshImages.length} CONFIRM_SPEND_SECONDS=${seconds}.`,
+      `[spend-plan] this run would submit ${freshImages.length} new image job(s) and ${seconds} billed video seconds (plan ${id}); approved: ${approvedPlan ? `plan ${approvedPlan}, ` : ""}${approvedImages} image(s), ${approvedSeconds}s. Nothing was submitted. `
+      + `Show the user the plan above and its estimated cost; after they approve it, run again with CONFIRM_SPEND_PLAN=${id} CONFIRM_SPEND_IMAGES=${freshImages.length} CONFIRM_SPEND_SECONDS=${seconds}.`,
     );
   }
+  const used = usedApprovals();
+  if (used.includes(id)) {
+    throw new Error(
+      `[spend-plan] approval for plan ${id} was already used by an earlier run of this job, so it does not cover this one. Nothing was submitted. `
+      + "Anything that earlier run submitted may already be billed: tell the user what is being resubmitted and get a new yes before running again.",
+    );
+  }
+  // Spend the approval before the first submission, so a crash or a re-run can't reuse it.
+  writeFileSync(APPROVALS_FILE, JSON.stringify([...used, id]));
 }
 
 async function genGridAndSplit(b) {
@@ -379,7 +446,7 @@ async function main() {
     const segs = CFG.segments;
     if (!Array.isArray(segs) || !segs.length) throw new Error("reference mode needs segments[]");
     const REFMODEL = CFG.video.refModel || PROFILE.video.r2v;
-    const nSeg = process.env.SEGS_MAX ? +process.env.SEGS_MAX : segs.length;
+    const nSeg = runCount("SEGS_MAX", segs.length);
     for (let i = 0; i < nSeg; i++) {
       const s = segs[i];
       const out = `${b}/seg${i + 1}.mp4`, last = `${b}/seg${i + 1}_last.png`;
@@ -399,7 +466,7 @@ async function main() {
     if (!CFG.grid) throw new Error("shot-pairs mode needs grid as the keyframe source");
     const segs = CFG.segments;
     if (!Array.isArray(segs) || !segs.length) throw new Error("shot-pairs mode needs segments[]");
-    const nSeg = process.env.SEGS_MAX ? +process.env.SEGS_MAX : segs.length;
+    const nSeg = runCount("SEGS_MAX", segs.length);
     for (let i = 0; i < nSeg; i++) {
       const s = segs[i];
       if (!Number.isInteger(s.first)) throw new Error(`shot-pairs segment ${i + 1} needs a first keyframe index`);
@@ -418,7 +485,7 @@ async function main() {
     const segs = CFG.segments;
     if (!Array.isArray(segs) || !segs.length) throw new Error("chain mode needs segments[]");
     const T2V = CFG.video.t2vModel || PROFILE.video.t2v;
-    const nSeg = process.env.SEGS_MAX ? +process.env.SEGS_MAX : segs.length;
+    const nSeg = runCount("SEGS_MAX", segs.length);
     const trim = segs.map((_, i) => (i === 0 ? 0 : (CFG.seamTrimFrames ?? 1))); // Remove duplicate opening frames from later segments.
     for (let i = 0; i < nSeg; i++) {
       const s = segs[i];
@@ -444,7 +511,7 @@ async function main() {
   } else {
     // ── Grid-to-clips: one short clip per panel, assembled as a hard-cut montage. ──
     if (!Array.isArray(CFG.shots) || CFG.shots.length !== N) throw new Error(`grid mode needs shots.length to equal rows*cols (${N})`);
-    const nClips = process.env.CLIPS_MAX ? +process.env.CLIPS_MAX : N;
+    const nClips = runCount("CLIPS_MAX", N);
     for (let i = 0; i < nClips; i++) {
       const out = `${b}/clip${i + 1}.mp4`;
       if (existsSync(out)) { console.log(`[clip${i + 1}] cached — skip`); continue; }

@@ -87,10 +87,13 @@ is still running on the provider's side.
 
 - **Chained stages must run in order** — the next segment needs the real tail of
   the previous one.
-- **Independent shots can run concurrently.** Cuts are assembled in the edit, so
-  there is no dependency between them.
+- **Independent shots can run concurrently** once the user has approved their
+  combined cost. Cuts are assembled in the edit, so there is no dependency
+  between them.
 - **Generate one representative pass before fanning out.** A quality gate on one
-  shot is much cheaper than discovering a spec problem across twelve.
+  shot is much cheaper than discovering a spec problem across twelve. The
+  representative pass and the fan-out are separate paid steps: quote each and
+  wait for the user's yes.
 
 ## What execution does not fix
 

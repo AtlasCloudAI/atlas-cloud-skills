@@ -66,7 +66,11 @@ export function createAtlasRestExecutor({ config, root, log = console.log }) {
       const message = error.name === "AbortError"
         ? `${path} fetch failed: timed out after ${requestTimeoutMs}ms`
         : `${path} fetch failed: ${error.message}`;
-      throw new Error(message);
+      // A submission that got no answer may still have been accepted and billed.
+      const maybeBilled = body
+        ? " The request may have reached Atlas Cloud and been billed: check the generations list in Atlas before running it again, and ask the user before resubmitting."
+        : "";
+      throw new Error(message + maybeBilled);
     } finally {
       clearTimeout(timer);
     }

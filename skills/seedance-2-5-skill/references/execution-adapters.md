@@ -96,13 +96,18 @@ Spend and safety limits in the runner:
 
 - Before anything is submitted it prints a `[spend-plan]` line with every new
   image job (storyboard grid, generated references) and every new video job
-  with the total billed seconds, and it stops there unless
-  `CONFIRM_SPEND_IMAGES` and `CONFIRM_SPEND_SECONDS` cover that plan. Nothing
-  is approved by default, and `GRID_ONLY` / `REFS_ONLY` runs are gated the same
-  way for their images. Show the user the plan and its estimated cost, and set
-  `CONFIRM_SPEND_IMAGES=<images>` and `CONFIRM_SPEND_SECONDS=<seconds>` only
-  after they approve it. Cached outputs and resumed prediction IDs are not
-  counted, because they bill nothing new.
+  with the total billed seconds, plus a plan id, and it stops there unless
+  `CONFIRM_SPEND_PLAN` names that plan and `CONFIRM_SPEND_IMAGES` /
+  `CONFIRM_SPEND_SECONDS` cover it. Nothing is approved by default, and
+  `GRID_ONLY` / `REFS_ONLY` runs are gated the same way for their images. Show
+  the user the plan and its estimated cost, and set
+  `CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_IMAGES=<images> CONFIRM_SPEND_SECONDS=<seconds>`
+  only after they approve it. An approval is spent before the first submission
+  and works once: running the same plan again needs a new yes. Cached outputs
+  and resumed prediction IDs are not counted, because they bill nothing new.
+- The runner accepts only the modes `grid`, `shot-pairs`, `reference` and
+  `chain`, and every duration must be a positive whole number of seconds; any
+  other value stops the run before anything is billed.
 - Seedance 2.5 image-to-video takes its frame shape from the input image (its
   `ratio` accepts only `adaptive`), so the runner sends `adaptive` there; the
   stitch step still scales to `video.ratio`.
