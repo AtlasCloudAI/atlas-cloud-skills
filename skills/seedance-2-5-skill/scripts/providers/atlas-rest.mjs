@@ -5,8 +5,13 @@ import { apiBase, apiKeyEnvName, audioMimeFromBytes } from "./guards.mjs";
 const POLL_INTERVAL_SECONDS = 2;
 const POLL_INTERVAL_MS = POLL_INTERVAL_SECONDS * 1000;
 
+// Atlas answers either { code, data } or the bare object; some gateways send
+// { data } alone. Take data whenever the top level has no id/status of its own.
 function unwrap(response) {
-  return response?.data && response.code !== undefined ? response.data : response;
+  const data = response?.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return response;
+  if (response.code !== undefined) return data;
+  return response.id === undefined && response.status === undefined ? data : response;
 }
 
 function imageMime(buffer, path) {
@@ -74,7 +79,15 @@ export function createAtlasRestExecutor({ config, root, log = console.log }) {
     } finally {
       clearTimeout(timer);
     }
-    const text = await response.text();
+    let text;
+    try {
+      text = await response.text();
+    } catch (error) {
+      const maybeBilled = body
+        ? " The request may have reached Atlas Cloud and been billed: check the generations list in Atlas before running it again, and ask the user before resubmitting."
+        : "";
+      throw new Error(`${path} HTTP ${response.status}: reading the response failed (${error?.message || error}).${maybeBilled}`);
+    }
     // A submission answered with a gateway error (5xx) or an unreadable body may still have been accepted.
     const unsure = body && (response.status >= 500 || response.ok)
       ? " The request may have reached Atlas Cloud and been billed: check the generations list in Atlas before running it again, and ask the user before resubmitting."

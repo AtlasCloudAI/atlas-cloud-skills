@@ -119,8 +119,10 @@ The spec is portable. Not everything in it is. Three layers behave differently:
 | **Capability** | Reference count, multi-shot in one generation, hard cuts, duration, timing adherence | Probe, then degrade |
 
 Load the target's [model profile](references/model-profile-schema.md). No
-profile means no assumptions: run the smallest probe that settles the question,
-record it, and degrade the spec to what the model actually supports. Report a
+profile means no assumptions: settle what you can with a quote (it validates
+parameters and spends nothing); if a real generation is needed, quote it and get
+the user's yes, run the smallest one that settles the question, record it, and
+degrade the spec to what the model actually supports. Report a
 degrade; never let it pass silently.
 
 ### Term plus observable description beats a dialect table

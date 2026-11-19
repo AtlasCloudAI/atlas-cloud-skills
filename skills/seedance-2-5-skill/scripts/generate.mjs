@@ -21,12 +21,16 @@
 // A video task is never resubmitted automatically: a failed or silent result
 // stops the run and leaves the retry decision to the user.
 // Requires Node 18+, ffmpeg, and ffprobe. Execution adapters live in scripts/providers/.
-import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, renameSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, renameSync, realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { createHash, randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { createExecutor, resolveModelProfile } from "./providers/index.mjs";
 import { insideRoot, readAudioFile } from "./providers/guards.mjs";
+
+// The skill's own folder (examples point at its assets/).
+const SKILL_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const CFG_PATH = resolve(process.argv[2] || "./config.json");
 const CFG = JSON.parse(readFileSync(CFG_PATH, "utf8"));
@@ -155,6 +159,9 @@ function resumePredictionIdFor(label, explicitId) {
   return id;
 }
 
+const NO_ID_MESSAGE = "Atlas Cloud answered the submission without a prediction ID, so it can't be tracked. "
+  + "It may already be running and billed: check the generations list in Atlas, tell the user, and don't resubmit without their yes.";
+
 function taskRecoveryError(label, id, error) {
   const message = error instanceof Error ? error.message : String(error);
   return new Error(
@@ -167,7 +174,8 @@ async function generateImage(body, label, explicitResumeId) {
   const resumeId = resumePredictionIdFor(label, explicitResumeId);
   let id;
   try {
-    id = resumeId || (await EXECUTOR.submitImage(body)).id;
+    id = resumeId || (await EXECUTOR.submitImage(body))?.id;
+    if (!id) throw new Error(`[${label}] ${NO_ID_MESSAGE}`);
     console.log(resumeId ? `[${label}] resuming ${id}` : `[${label}] submitted ${id}`);
     const result = await EXECUTOR.poll(id, label, MAX_POLL_SECONDS);
     if (!result.outputs?.[0]) throw new Error(`[${label}] completed without an image output`);
@@ -183,7 +191,8 @@ async function generateVideo(body, label, out, last, resumePredictionId) {
   const resumeId = resumePredictionIdFor(label, resumePredictionId);
   let id;
   try {
-    id = resumeId || (await EXECUTOR.submitVideo(body)).id;
+    id = resumeId || (await EXECUTOR.submitVideo(body))?.id;
+    if (!id) throw new Error(`[${label}] ${NO_ID_MESSAGE}`);
     console.log(resumeId ? `[${label}] resuming ${id}` : `[${label}] submitted ${id}`);
     const d = await EXECUTOR.poll(id, label, MAX_POLL_SECONDS);
     if (!d.outputs?.[0]) throw new Error(`[${label}] model returned no video output`);
@@ -263,18 +272,63 @@ function approvedAmount(envName, fallback) {
   return value;
 }
 
-// Spent approvals live next to the job config, not in outDir: clearing or
-// renaming the build folder must not make an old approval usable again.
+// Approvals live next to the job config, not in outDir. A dry run writes a
+// pending approval with a random nonce; the approved run consumes it with an
+// atomic rename. If the pending file is gone (already used, the job folder was
+// moved or cleaned, another run took it), the approval is refused - losing
+// local state can never make an old approval usable again.
 const APPROVALS_DIR = resolve(ROOT, ".spend-approvals");
+const APPROVAL_TTL_MS = 24 * 60 * 60 * 1000;
 
-// A short id for exactly what this run would bill: this job (config path,
-// output folder and the whole config, prompts included), the models and
-// resolution, and every new job with its seconds. The user's approval names it.
-function spendPlanId(freshImages, freshVideos) {
+// A local reference image must be a real image inside the job directory or the
+// skill's own folder (its bundled examples). Symlinks are resolved first, so a
+// link can't point the runner at a private file elsewhere on the machine.
+function localReferenceImage(file, what) {
+  const path = resolve(ROOT, file);
+  if (!existsSync(path)) throw new Error(`${what} file not found: ${path}`);
+  const real = realpathSync(path);
+  const allowed = [ROOT, SKILL_DIR].some(root => { try { return insideRoot(realpathSync(root), real); } catch { return false; } });
+  if (!allowed) throw new Error(`${what} must be a file inside the job directory ${ROOT} (or the skill folder), got ${real}`);
+  imageMime(readFileSync(real), real);   // PNG, JPEG or WebP, by its bytes
+  return real;
+}
+
+function fileDigest(path) {
+  try {
+    return createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 16);
+  } catch {
+    return null;
+  }
+}
+
+// Everything outside the config that changes what is sent or who pays for it:
+// local input files (references, audio, cached storyboard frames), the API
+// endpoint, key and CLI (only hashed, never printed).
+function externalInputs() {
+  const files = {};
+  const add = path => { files[path] = fileDigest(path); };
+  (Array.isArray(CFG.refs) ? CFG.refs : []).forEach(ref => { if (ref?.file) add(resolve(ROOT, ref.file)); });
+  (Array.isArray(AUDIO.references) ? AUDIO.references : []).forEach(ref => {
+    const source = typeof ref === "string" ? ref : ref?.file || ref?.url;
+    if (source && !/^https?:\/\//.test(source)) add(resolve(ROOT, source));
+  });
+  for (const name of ["grid.png", ...Array.from({ length: 64 }, (_, i) => `ref_${pad(i + 1)}.png`)]) {
+    if (existsSync(`${DIR}/${name}`)) add(`${DIR}/${name}`);
+  }
+  const env = Object.fromEntries(Object.keys(process.env).filter(name => /^ATLAS/.test(name)).sort()
+    .map(name => [name, createHash("sha256").update(process.env[name] || "").digest("hex").slice(0, 16)]));
+  return { files, env, executor: EXECUTOR.id };
+}
+
+// A short digest of exactly what this run would bill: this job (config path,
+// output folder, the whole config with its prompts, and the external inputs
+// above), the models and resolution, and every new job with its seconds.
+function spendPlanDigest(freshImages, freshVideos) {
   const plan = {
     config: CFG_PATH,
     outDir: DIR,
     job: CFG,
+    inputs: externalInputs(),
     mode: MODE,
     imageModel: IMG_MODEL,
     videoModels: videoModels(),
@@ -292,20 +346,47 @@ function videoModels() {
   return [VID_MODEL];
 }
 
-// Record the approval as spent. The marker file is created exclusively, so two
-// runs started at once can't both use the same approval.
-function spendApproval(id) {
+function pendingPath(digest) {
+  return `${APPROVALS_DIR}/pending-${digest}.json`;
+}
+
+// The approval id this plan waits for: `<digest>-<nonce>`. A fresh pending
+// approval for the same plan keeps its nonce, so repeated dry runs show the
+// same id; an expired or unreadable one is replaced.
+function pendingApprovalId(digest) {
+  const path = pendingPath(digest);
+  try {
+    const pending = JSON.parse(readFileSync(path, "utf8"));
+    if (typeof pending.nonce === "string" && Date.now() - pending.createdAt < APPROVAL_TTL_MS) return `${digest}-${pending.nonce}`;
+  } catch {
+    // none yet, or unreadable: write a new one below
+  }
+  const nonce = randomBytes(4).toString("hex");
   try {
     mkdirSync(APPROVALS_DIR, { recursive: true });
-    writeFileSync(`${APPROVALS_DIR}/${id}`, `${new Date().toISOString()}\n`, { flag: "wx" });
+    writeFileSync(path, JSON.stringify({ nonce, createdAt: Date.now() }));
   } catch (error) {
-    if (error?.code === "EEXIST") {
-      throw new Error(
-        `[spend-plan] approval for plan ${id} was already used by an earlier run of this job, so it does not cover this one. Nothing was submitted. `
-        + "Whatever that earlier run submitted may already be billed: tell the user what this run would resubmit and get a new yes before running again.",
-      );
-    }
-    throw new Error(`[spend-plan] could not record the approval for plan ${id} (${error?.message || error}). Nothing was submitted.`);
+    throw new Error(`[spend-plan] could not record the plan to approve (${error?.message || error}). Nothing was submitted.`);
+  }
+  return `${digest}-${nonce}`;
+}
+
+// Spend the approval: atomically move the pending file aside. Exactly one run
+// can do this; a second run (concurrent or later) finds nothing to consume.
+function consumeApproval(digest, approvedId) {
+  const path = pendingPath(digest);
+  let pending;
+  try {
+    pending = JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return false;
+  }
+  if (`${digest}-${pending.nonce}` !== approvedId || !(Date.now() - pending.createdAt < APPROVAL_TTL_MS)) return false;
+  try {
+    renameSync(path, `${APPROVALS_DIR}/used-${approvedId}.json`);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -322,19 +403,25 @@ function enforceSpendPlan() {
     + `${resumed ? `; ${resumed} resumed (already billed)` : ""}`,
   );
   if (freshImages.length === 0 && fresh.length === 0) return;   // nothing new is billed
-  const id = spendPlanId(freshImages, fresh);
-  console.log(`[spend-plan] plan id ${id}`);
+  const digest = spendPlanDigest(freshImages, fresh);
   const approvedImages = approvedAmount("CONFIRM_SPEND_IMAGES", UNCONFIRMED_SPEND_IMAGES);
   const approvedSeconds = approvedAmount("CONFIRM_SPEND_SECONDS", UNCONFIRMED_SPEND_SECONDS);
   const approvedPlan = (process.env.CONFIRM_SPEND_PLAN || "").trim();
-  if (approvedPlan !== id || freshImages.length > approvedImages || seconds > approvedSeconds) {
-    throw new Error(
-      `[spend-plan] this run would submit ${freshImages.length} new image job(s) and ${seconds} billed video seconds (plan ${id}); approved: ${approvedPlan ? `plan ${approvedPlan}, ` : ""}${approvedImages} image(s), ${approvedSeconds}s. Nothing was submitted. `
-      + `Show the user the plan above and its estimated cost; after they approve it, run again with CONFIRM_SPEND_PLAN=${id} CONFIRM_SPEND_IMAGES=${freshImages.length} CONFIRM_SPEND_SECONDS=${seconds}.`,
-    );
-  }
   // Spend the approval before the first submission, so a crash or a re-run can't reuse it.
-  spendApproval(id);
+  if (approvedPlan && freshImages.length <= approvedImages && seconds <= approvedSeconds && consumeApproval(digest, approvedPlan)) {
+    console.log(`[spend-plan] plan ${approvedPlan} approved; this approval is now used`);
+    return;
+  }
+  const id = pendingApprovalId(digest);
+  console.log(`[spend-plan] plan id ${id}`);
+  const stale = approvedPlan && approvedPlan !== id
+    ? `CONFIRM_SPEND_PLAN=${approvedPlan} does not match this plan, or that approval was already used, expired, or belonged to a job folder that changed. `
+    : "";
+  throw new Error(
+    `[spend-plan] this run would submit ${freshImages.length} new image job(s) and ${seconds} billed video seconds (plan ${id}). Nothing was submitted. ${stale}`
+    + `Show the user the plan above and its estimated cost; after they approve it, run again with CONFIRM_SPEND_PLAN=${id} CONFIRM_SPEND_IMAGES=${freshImages.length} CONFIRM_SPEND_SECONDS=${seconds}. `
+    + "The approval works for one run within 24 hours.",
+  );
 }
 
 // Everything this run needs from the config, checked before the approval is
@@ -343,24 +430,69 @@ function enforceSpendPlan() {
 function validateJob() {
   const nonEmpty = value => Array.isArray(value) && value.length > 0;
   const fail = message => { throw new Error(`${message}. Nothing was submitted.`); };
+  const frames = CFG.grid ? CFG.grid.rows * CFG.grid.cols : 0;
+  const frame = (value, where) => {
+    if (!Number.isInteger(value) || value < 1 || value > frames) fail(`${where} must be a storyboard panel number from 1 to ${frames}`);
+  };
+  // ffmpeg crops the storyboard, ffprobe checks every output: missing tools must stop the run before anything is billed.
+  for (const [tool, name] of [[FFMPEG, "ffmpeg"], [FFPROBE, "ffprobe"]]) {
+    const probe = spawnSync(tool, ["-version"], { encoding: "utf8" });
+    if (probe.error || probe.status !== 0) fail(`${name} is not available (${tool}); install it or set ${name.toUpperCase()}_PATH`);
+  }
   if ((MODE === "grid" || MODE === "shot-pairs") && !CFG.grid) fail(`${MODE} mode needs grid`);
   if (CFG.grid) {
     const { rows, cols } = CFG.grid;
     if (!Number.isInteger(rows) || !Number.isInteger(cols) || rows <= 0 || cols <= 0) fail("grid.rows and grid.cols must be positive whole numbers");
+    if (typeof CFG.grid.prompt !== "string" && !existsSync(`${DIR}/grid.png`) && !resumePredictionIdFor("grid", CFG.grid.resumePredictionId)) fail("grid.prompt is required to generate the storyboard");
   }
   if (process.env.GRID_ONLY) return;
-  if (MODE === "reference" && !nonEmpty(CFG.refs)) fail("reference mode needs refs[]");
+  if (CFG.refs !== undefined) {
+    if (MODE === "reference" && !nonEmpty(CFG.refs)) fail("reference mode needs refs[]");
+    CFG.refs.forEach((ref, i) => {
+      if (!ref || typeof ref !== "object") fail(`refs[${i}] must be an object with file or prompt`);
+      if (ref.file) {
+        try { localReferenceImage(ref.file, `ref${i + 1}`); } catch (error) { fail(error.message); }
+      } else if (typeof ref.prompt !== "string" && !existsSync(`${DIR}/ref_${pad(i + 1)}.png`) && !resumePredictionIdFor(`ref${i + 1}`, ref.resumePredictionId)) {
+        fail(`refs[${i}] needs file or prompt`);
+      }
+    });
+  } else if (MODE === "reference") {
+    fail("reference mode needs refs[]");
+  }
   if (process.env.REFS_ONLY) return;
   if (MODE === "grid") {
-    const N = CFG.grid.rows * CFG.grid.cols;
-    if (!Array.isArray(CFG.shots) || CFG.shots.length !== N) fail(`grid mode needs shots.length to equal rows*cols (${N})`);
-  } else if (!nonEmpty(CFG.segments)) {
-    fail(`${MODE} mode needs segments[]`);
+    if (!Array.isArray(CFG.shots) || CFG.shots.length !== frames) fail(`grid mode needs shots.length to equal rows*cols (${frames})`);
+    CFG.shots.forEach((shot, i) => { if (typeof shot !== "string" || !shot.trim()) fail(`shots[${i}] must be a prompt`); });
+    return;
   }
+  if (!nonEmpty(CFG.segments)) fail(`${MODE} mode needs segments[]`);
+  CFG.segments.forEach((s, i) => {
+    if (!s || typeof s !== "object") fail(`segments[${i}] must be an object`);
+    if (typeof s.prompt !== "string" || !s.prompt.trim()) fail(`segments[${i}].prompt is required`);
+  });
   if (MODE === "shot-pairs") {
-    CFG.segments.forEach((s, i) => { if (!Number.isInteger(s?.first)) fail(`shot-pairs segment ${i + 1} needs a first keyframe index`); });
+    CFG.segments.forEach((s, i) => {
+      frame(s.first, `shot-pairs segment ${i + 1} first`);
+      if (s.last !== undefined) frame(s.last, `shot-pairs segment ${i + 1} last`);
+    });
+  }
+  if (MODE === "chain") {
+    CFG.segments.forEach((s, i) => {
+      const isT2V = s.t2v || (i === 0 && !s.first && !CFG.grid);
+      if (isT2V) return;
+      if (i === 0 || s.chain === false) {
+        if (!CFG.grid) fail(`chain segment ${i + 1} starts from a storyboard panel, so it needs grid (or set t2v: true)`);
+        frame(s.first, `chain segment ${i + 1} first`);
+      }
+      if (s.last && CFG.grid) frame(s.last, `chain segment ${i + 1} last`);
+    });
   }
   if (MODE === "reference") {
+    CFG.segments.forEach((s, i) => {
+      if (s.refs === undefined) return;
+      if (!Array.isArray(s.refs) || !s.refs.length) fail(`segments[${i}].refs must be a non-empty array of reference numbers`);
+      s.refs.forEach(index => { if (!Number.isInteger(index) || index < 1 || index > CFG.refs.length) fail(`segments[${i}].refs has ${JSON.stringify(index)}, but there are ${CFG.refs.length} references`); });
+    });
     (AUDIO.references || []).forEach((ref, i) => {
       const source = typeof ref === "string" ? ref : ref?.file || ref?.url;
       const what = `input audio reference ${i + 1}`;
@@ -403,8 +535,7 @@ async function genRefs(b) {
     const f = `${b}/ref_${pad(i + 1)}.png`;
     if (existsSync(f)) { console.log(`[ref${i + 1}] cached — skip`); continue; }
     if (CFG.refs[i].file) {
-      const source = resolve(ROOT, CFG.refs[i].file);
-      if (!existsSync(source)) throw new Error(`ref${i + 1} file not found: ${source}`);
+      const source = localReferenceImage(CFG.refs[i].file, `ref${i + 1}`);
       copyFileSync(source, f);
       console.log(`[ref${i + 1}] copied local file`);
       continue;
@@ -424,7 +555,7 @@ function stitch(b, clips, trimFirst) {
   // trimFirst[i] is the number of opening frames removed to avoid a duplicated seam; zero keeps all frames.
   const keepAudio = V.generate_audio;
   if (keepAudio && !clips.every(hasAudio)) {
-    throw new Error("[stitch] a segment has no native audio track; stitching stopped rather than silently downgrading to a silent output. Regenerate that segment.");
+    throw new Error("[stitch] a segment has no native audio track; stitching stopped rather than silently downgrading to a silent output. Tell the user: regenerating that segment is billed again and needs their yes.");
   }
   const parts = clips.map((c, i) => {
     const tr = trimFirst[i] ? `,trim=start_frame=${trimFirst[i]},setpts=PTS-STARTPTS` : "";
@@ -492,7 +623,7 @@ async function main() {
     // ── Multi-reference video: hand, setting, style, finished state, and opening frame may be combined. ──
     const segs = CFG.segments;
     if (!Array.isArray(segs) || !segs.length) throw new Error("reference mode needs segments[]");
-    const REFMODEL = CFG.video.refModel || PROFILE.video.r2v;
+    const REFMODEL = CFG.video?.refModel || PROFILE.video.r2v;
     const nSeg = runCount("SEGS_MAX", segs.length);
     for (let i = 0; i < nSeg; i++) {
       const s = segs[i];
@@ -531,7 +662,7 @@ async function main() {
     // Segment source: t2v (no image), i2v-from-grid (keyframe), or i2v-chain (prior real tail).
     const segs = CFG.segments;
     if (!Array.isArray(segs) || !segs.length) throw new Error("chain mode needs segments[]");
-    const T2V = CFG.video.t2vModel || PROFILE.video.t2v;
+    const T2V = CFG.video?.t2vModel || PROFILE.video.t2v;
     const nSeg = runCount("SEGS_MAX", segs.length);
     const trim = segs.map((_, i) => (i === 0 ? 0 : (CFG.seamTrimFrames ?? 1))); // Remove duplicate opening frames from later segments.
     for (let i = 0; i < nSeg; i++) {

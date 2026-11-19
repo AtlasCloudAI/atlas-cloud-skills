@@ -228,8 +228,9 @@ Read the reference matching the job:
    then verify it fits the chosen route.
 3. If the board passes review, quote one representative video pass (model,
    duration, resolution, estimated cost) and wait for the user's explicit yes in
-   a new message before submitting it. Otherwise refine or regenerate the board
-   first. Quote and confirm every later billable segment the same way.
+   a new message before submitting it. Otherwise tell the user what is wrong with
+   the board; regenerating it is another paid image, so quote it and wait for
+   their yes. Quote and confirm every later billable segment the same way.
 4. Review identity, locks, stage end states, composition, motion, seam, and audio
    in that order, and stop at the first failure — later checks are wasted effort
    on a wrong identity. Regenerate only the failed shot or segment.
