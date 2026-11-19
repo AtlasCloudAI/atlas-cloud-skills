@@ -1,11 +1,17 @@
 import { readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
+import { apiBase, apiKeyEnvName, audioMimeFromBytes } from "./guards.mjs";
 
 const POLL_INTERVAL_SECONDS = 2;
 const POLL_INTERVAL_MS = POLL_INTERVAL_SECONDS * 1000;
 
+// Atlas answers either { code, data } or the bare object; some gateways send
+// { data } alone. Take data whenever the top level has no id/status of its own.
 function unwrap(response) {
-  return response?.data && response.code !== undefined ? response.data : response;
+  const data = response?.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return response;
+  if (response.code !== undefined) return data;
+  return response.id === undefined && response.status === undefined ? data : response;
 }
 
 function imageMime(buffer, path) {
@@ -15,9 +21,10 @@ function imageMime(buffer, path) {
   throw new Error(`unsupported image format: ${path} (use PNG, JPEG, or WebP)`);
 }
 
-function audioMime(path) {
-  const suffix = path.toLowerCase().split(".").pop();
-  return ({ mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", aac: "audio/aac", ogg: "audio/ogg", opus: "audio/ogg", flac: "audio/flac" })[suffix] || "application/octet-stream";
+function audioMime(buffer, path) {
+  const mime = audioMimeFromBytes(buffer);
+  if (!mime) throw new Error(`unsupported audio format: ${path} (use WAV, MP3, AAC, M4A, OGG, or FLAC)`);
+  return mime;
 }
 
 function collectModelIds(value, ids = new Set()) {
@@ -33,8 +40,8 @@ function collectModelIds(value, ids = new Set()) {
 
 export function createAtlasRestExecutor({ config, root, log = console.log }) {
   const execution = config.execution || {};
-  const base = execution.base || config.base || "https://api.atlascloud.ai";
-  const apiKeyEnv = execution.apiKeyEnv || config.apiKeyEnv || "ATLASCLOUD_API_KEY";
+  const base = apiBase(config, log);
+  const apiKeyEnv = apiKeyEnvName(config);
   const requestTimeoutMs = execution.requestTimeoutMs ?? 45_000;
   const key = process.env[apiKeyEnv]
     || process.env.ATLASCLOUD_API_KEY
@@ -64,14 +71,30 @@ export function createAtlasRestExecutor({ config, root, log = console.log }) {
       const message = error.name === "AbortError"
         ? `${path} fetch failed: timed out after ${requestTimeoutMs}ms`
         : `${path} fetch failed: ${error.message}`;
-      throw new Error(message);
+      // A submission that got no answer may still have been accepted and billed.
+      const maybeBilled = body
+        ? " The request may have reached Atlas Cloud and been billed: check the generations list in Atlas before running it again, and ask the user before resubmitting."
+        : "";
+      throw new Error(message + maybeBilled);
     } finally {
       clearTimeout(timer);
     }
-    const text = await response.text();
+    let text;
+    try {
+      text = await response.text();
+    } catch (error) {
+      const maybeBilled = body
+        ? " The request may have reached Atlas Cloud and been billed: check the generations list in Atlas before running it again, and ask the user before resubmitting."
+        : "";
+      throw new Error(`${path} HTTP ${response.status}: reading the response failed (${error?.message || error}).${maybeBilled}`);
+    }
+    // A submission answered with a gateway error (5xx) or an unreadable body may still have been accepted.
+    const unsure = body && (response.status >= 500 || response.ok)
+      ? " The request may have reached Atlas Cloud and been billed: check the generations list in Atlas before running it again, and ask the user before resubmitting."
+      : "";
     let json;
-    try { json = JSON.parse(text); } catch { throw new Error(`${path} HTTP ${response.status}: ${text.slice(0, 200)}`); }
-    if (!response.ok) throw new Error(`${path} HTTP ${response.status}: ${text.slice(0, 200)}`);
+    try { json = JSON.parse(text); } catch { throw new Error(`${path} HTTP ${response.status}: ${text.slice(0, 200)}${unsure}`); }
+    if (!response.ok) throw new Error(`${path} HTTP ${response.status}: ${text.slice(0, 200)}${unsure}`);
     return unwrap(json);
   }
 
@@ -115,7 +138,7 @@ export function createAtlasRestExecutor({ config, root, log = console.log }) {
     if (/^https?:\/\//.test(source)) return source;
     const path = resolve(root, source);
     const buffer = readFileSync(path);
-    const mime = /\.(png|jpe?g|webp)$/i.test(path) ? imageMime(buffer, path) : audioMime(path);
+    const mime = /\.(png|jpe?g|webp)$/i.test(path) ? imageMime(buffer, path) : audioMime(buffer, path);
     const form = new FormData();
     form.append("file", new Blob([buffer], { type: mime }), basename(path));
     const response = await fetch(`${base}/api/v1/model/uploadMedia`, {

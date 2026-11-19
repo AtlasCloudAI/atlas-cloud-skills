@@ -16,7 +16,7 @@
 | 两条成片之间的桥接 | 无缝转场 | 两条视频 | 生成中间的衔接内容 |
 | 从 3D 预览取运动、调度与运镜 | 白模参考 | 粗或精白模视频加外观参考 | 按白模的时序与调度渲出的成片 |
 
-当前默认可执行模型是 Seedance 2.0。只有所选服务已真实提供 Seedance 2.5 及其限制时，才使用 2.5 路线。
+当前默认可执行模型是 Seedance 2.5；所选服务没有提供 2.5，或任务需要只有 2.0 才有的参数时，退回 Seedance 2.0。提交前核实实际要用的那个模型的限制。
 
 后四条路线依赖的能力逐模型、逐服务不同。**提供之前先核实可用性**——2.0 与 2.5 的对照、以及哪些已发布能力属于平台功能而非 API 参数，见 [能力](capabilities.zh-CN.md)。
 
@@ -42,9 +42,9 @@
 
 已有 Storyboard 默认直接作为 R2V 参考。Seedance 通常能理解格子顺序；不需要预先删掉编号、格线、箭头或备注。只有实测视频把这些元素渲染进最终画面时，才生成清理版。
 
-没有 Storyboard 时，使用 [中文提示词模板](prompt-templates.zh-CN.md) 中的 Seedream 模板生成一张。**必须在宿主界面展示图片，自己检查后再继续 R2V。** 这只是中间状态展示，不需要等待用户确认。
+没有 Storyboard 时，使用 [中文提示词模板](prompt-templates.zh-CN.md) 中的 Seedream 模板生成一张。**必须在宿主界面展示图片并自己检查。** 生成分镜图和后面的每段视频都是单独计费的步骤：每一步都先报价（或给用户看脚本打印的 `[spend-plan]`），等用户明确同意后再提交。
 
-检查格子顺序、关键节奏是否可读、重复主体是否一致，以及该任务真正重要的结构条件，例如人物解剖、产品形态或关键文字。发现明显错误先自行重做；只有创意取舍无法推断时才询问用户。
+检查格子顺序、关键节奏是否可读、重复主体是否一致，以及该任务真正重要的结构条件，例如人物解剖、产品形态或关键文字。发现明显错误时告诉用户哪里不对；重做是又一张计费图片，先报价、等用户同意。
 
 只有明确改为 I2V 首尾帧路线时才切格。切格前先检查布局；自动切图只能确认位置，不能判断模型是否真的画对了每格内容。
 
@@ -145,7 +145,7 @@
 
 1. 需要生成 Storyboard 时，先只生成静帧，在对话中展示，检查后才发起视频请求。
 2. 用户提供 Storyboard 时，若对话中还不可见则展示它，然后检查是否适合所选路线。
-3. 分镜通过后直接生成一条代表性视频，不等待用户确认；不通过则先优化分镜。
+3. 分镜通过后，先对一条代表性视频报价（模型、时长、分辨率、预估费用），等用户在新消息里明确确认后再提交；不通过则先优化分镜。之后每一段计费任务都同样先报价、再确认。
 4. 按主体一致性、锁、段落末态、构图、运动、接缝、音频的顺序检查，**第一个失败就停**——身份或落点错了，后面全白查。只重做出错镜头或片段。
 5. 接龙必须按顺序生成，因为下一段要用真实尾帧。剪辑型视频则独立生成各镜头，再在时间线中处理预先设计的转场。
 
@@ -155,11 +155,21 @@
 
 ## 6. Atlas 执行路线
 
-创作路线与提交方式相互独立。默认使用 Seedream 5.0 Pro 生图、Seedance 2.0 生视频；改模型前先核实其支持所需路线。
+创作路线与提交方式相互独立。默认使用 Seedream 5.0 Pro 生图、Seedance 2.5 生视频（`bytedance/seedance-2.5/text-to-video`、`.../image-to-video`、`.../reference-to-video`）；2.5 不可用或做不了这个任务时退回 Seedance 2.0。用户点名的模型优先，但要先核实它支持所需路线。
 
-在智能体对话中，默认由 **Atlas Cloud Skill 直接执行生成**。它可以查模型、上传本地素材、提交图片或视频任务、轮询并取回结果。只有它实际提交了任务，才报告 `Execution: atlas-skill`。
+### 有 Atlas MCP 工具时（插件或连接器）
 
-只有用户明确选择 MCP 且当前客户端暴露了生成工具时，才用 `atlas-mcp`。只有用户明确选择终端、脚本、CI 或批量执行时，才用 `atlas-cli`。若 Atlas Cloud Skill 缺失，先协助安装 `AtlasCloudAI/atlas-cloud-skills`，再选择替代路径。
+适用于 Codex、Claude Code、Cursor 里的 Atlas Cloud 插件，以及 ChatGPT、Claude、WorkBuddy 等 MCP 客户端里的 Atlas Cloud 连接器。只要工具列表里有 Atlas MCP 生成工具（`atlas_generate_image`、`atlas_generate_video` 等），它们就是 Atlas 执行路线，也是唯一的生成路线，因为每个任务提交前都会先报价。每个阶段都用它们；下面关于 API Key、安装 Skill 和脚本运行器的说明只适用于独立部署，忽略即可。不要运行 `scripts/generate.mjs`，也不要自己调 Atlas REST API：这两条路都会直接提交，不报价。只有用户明确要求终端、CI 或批量执行时才用脚本。
+
+- 分镜板、关键帧、参考图等所有静态图，一律用 `atlas_generate_image` 调 Atlas 图像模型生成（默认 Seedream 5.0 Pro）。不论哪个阶段、哪怕只是草稿，都不要用宿主自带的生图工具：用户要的是 Atlas 工作流，计费和结果都以此为准。
+- 生成工具会先返回实时报价并停下。转告第一次报价时，顺带说明后续每个阶段用哪个 Atlas 模型（例如「分镜：Seedream 5.0 Pro；视频：Seedance 2.5」），以及每一步提交前都会先报价，然后等用户在新消息里确认。不要一开始就让用户挑模型或报预算。模型是你自己选的，就带上 `why_this_model`，一句话说明理由。
+- 会显示 Atlas 卡片的应用里，报价就是一张带确认按钮的卡片：引导用户看卡片即可。用户在卡片上确认后，卡片会自己提交并跟踪任务，不要再调生成工具；用户拒绝或改了需求，用 `atlas_cancel_quote` 作废旧报价。
+- 本地参考图用 `atlas_get_upload_url` 上传；用户 Atlas 资产库里已有的文件，用 `atlas_search_assets` 找到后，调 `atlas_use_assets` 拿地址（或直接传 `asset://<asset_id>`）。用 `atlas_get_prediction` 轮询（返回后立刻再调，服务端已在两次查询之间等待），同一回合内一直查到该阶段结束。
+- 如果工具列表里没有 Atlas 工具，说明插件或连接器还没登录：告诉用户怎么登录。不要为了绕过去而安装 Skill、找 API Key 或运行 `scripts/generate.mjs`——这些路线都不报价就直接提交。
+
+### 没有 Atlas MCP 工具时
+
+在智能体对话中由 **Atlas Cloud Skill 直接执行生成**。它可以查模型、上传本地素材、提交图片或视频任务、轮询并取回结果。每次计费提交前，先告诉用户模型、时长、分辨率和预估费用，等用户明确确认。只有它实际提交了任务，才报告 `Execution: atlas-skill`。只有用户明确选择终端、脚本、CI 或批量执行时，才用 `atlas-cli`。若 Atlas Cloud Skill 缺失，先协助安装 `AtlasCloudAI/atlas-cloud-skills`，再选择替代路径。
 
 报告“缺少 Atlas Cloud API Key”之前，必须检查**实际选中的执行进程**。REST 脚本先检查 `ATLASCLOUD_API_KEY`，再兼容检查 `ATLAS_CLOUD_API_KEY`。不要根据另一个服务商、插件或进程的状态推断凭据是否存在；不同执行通道可能拥有相互独立的凭据作用域。
 
@@ -170,13 +180,13 @@
 所有图片和视频生成都必须遵守：
 
 1. 提交后立即记录预测 ID 和对应创作阶段。
-2. `starting`、`queued`、`pending`、`processing` 都是进行中状态；必须每 2 秒查询同一 ID，禁止为同一阶段再提交任务。
+2. `starting`、`queued`、`pending`、`processing` 都是进行中状态；必须持续查询同一 ID（查询间隔见下文），禁止为同一阶段再提交任务。
 3. `completed`、`succeeded` 是成功终态；必须下载并检查输出，才能开始依赖它的下一阶段。
-4. `failed`、`timeout`、`canceled` 是失败终态；新任务必须经过明确重试决定，并先报告原任务 ID 和可能增加的费用。
+4. `failed`、`timeout`、`canceled` 是失败终态；要不要建新任务由用户决定：先报告原任务 ID 和可能增加的费用，等用户同意。
 5. 推理时间为 0 或缺失、输出延迟、本地轮询超时、对话中断、临时查询失败，都不能证明任务失败；必须保留 ID 并恢复轮询。
 6. 用户说“继续”只表示恢复原任务，不代表允许重试。Storyboard 仍在生成时，禁止提交依赖它的视频任务。
 
-本工作流的 2 秒查询周期适用于所有 Atlas 执行路线。`atlas-skill` 每 2 秒用同一 ID 重复执行查询预测结果的步骤；`atlas-mcp` 每 2 秒用同一 ID 调用一次 `atlas_get_prediction`。MCP 服务端每次工具调用只查询一次状态，循环由智能体负责。内置 REST 和 CLI 适配器则在代码中实现 2 秒轮询。查询状态是只读操作，任何情况下都不能用新的生成调用代替。
+Skill、CLI、REST 路线每 2 秒查询一次：`atlas-skill` 每 2 秒用同一 ID 重复执行查询预测结果的步骤。`atlas-mcp` 用同一 ID 反复调用 `atlas_get_prediction`，每次返回后立刻再调（服务端每次最多等约 20 秒）。MCP 服务端每次工具调用只查询一次状态，循环由智能体负责。内置 REST 和 CLI 适配器则在代码中实现 2 秒轮询。查询状态是只读操作，任何情况下都不能用新的生成调用代替。
 
 脚本恢复任务时，把原 ID 写入 `execution.resumePredictionIds.<阶段>`。阶段键包括 `grid`、`ref1`、`ref2`、`seg1`、`shot1`、`clip1` 等。不能因为上一轮轮询进程结束就创建替代任务。
 
@@ -186,6 +196,10 @@
 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
 CLIPS_MAX=1 node scripts/generate.mjs scripts/myjob.json
 SEGS_MAX=1 node scripts/generate.mjs scripts/myjob.json
+# 每次运行（包括 GRID_ONLY、REFS_ONLY）都会先打印 [spend-plan] 行（新图片任务数、计费视频秒数和计划编号）并停下；
+# 把计划和预估费用给用户看，同意后按脚本打印的值原样重跑。一次同意只能用一次：同一份计划再跑（比如某段失败后）要重新征得同意
+CONFIRM_SPEND_PLAN=<计划编号> CONFIRM_SPEND_IMAGES=1 GRID_ONLY=1 node scripts/generate.mjs scripts/myjob.json
+CONFIRM_SPEND_PLAN=<计划编号> CONFIRM_SPEND_SECONDS=40 node scripts/generate.mjs scripts/myjob.json
 ```
 
 脚本输出 `[storyboard-preview]` 绝对路径时，必须把该图展示给用户并自行检查，再继续视频任务。详细执行规则见 [中文执行适配层](execution-adapters.zh-CN.md)。

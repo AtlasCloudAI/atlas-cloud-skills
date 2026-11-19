@@ -43,7 +43,8 @@ Two of these deserve special handling.
 ### Anti-default suffixes: overshoot is a real failure
 
 Do not port an anti-default phrase without checking the target's baseline. The
-test is cheap: generate once with the phrase and once without, on the same spec.
+test is two generations of the same spec, once with the phrase and once without;
+both are billed, so quote them and get the user's yes first.
 If the version *without* it is already at or past the target, the phrase is
 counterproductive on this model. Record both results in the profile — the
 "ineffective or overshooting" field exists for this.
@@ -72,18 +73,24 @@ These are not misunderstandings; they are hard limits on what the interface take
 
 No profile means no assumptions. Run the smallest test that settles the question,
 then record it. Order probes cheapest-first and stop as soon as the spec is
-satisfiable:
+satisfiable. A probe that generates is billed like any other job: quote it and
+get the user's yes before running it. In order:
 
 1. **Read what is published** — reference limits, durations, resolutions. Verify
    against the live model page rather than a doc example; treat a 200 response as
    inconclusive until the page content confirms the model exists.
 
-   ⚠️ **A published enumeration is a hypothesis, not a limit.** Documented ranges
-   are frequently narrower than what submission accepts, and pages contradict
-   themselves — the same page has been observed stating three different duration
-   ranges in three places. **Submit the value you actually want and let the API
-   answer.** A rejected submission creates no task and costs nothing, so testing
-   beats designing around the table.
+   ⚠️ **Values outside the published table: the quote's error decides, never a
+   real submission.** Documented ranges can be narrower than what a provider
+   accepts, and pages contradict themselves — the same page has been observed
+   stating three different duration ranges in three places. To find out whether the value you actually want works, ask for it in a quote
+   (call the generation tool without `confirmed`). The Atlas MCP server
+   validates every parameter against the model's live schema at that step, so a
+   value outside the schema's enumeration is rejected there with an error and
+   nothing is spent: **take that error as the answer** and design around a
+   supported value. Never try the value with a real submission — if it is
+   accepted, that job runs and is billed. Asking still beats designing around
+   the table.
 
    This error is asymmetric: believing a too-narrow table silently degrades the
    spec, the run then succeeds, and nothing in the output reveals that a better

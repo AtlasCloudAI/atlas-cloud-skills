@@ -1,10 +1,12 @@
 # Atlas 执行适配层
 
-创作规划与模型配置相互独立。默认使用 Seedream 5.0 Pro 生图、Seedance 2.0 生视频。任何计费生成前，都先核实所选模型支持需要的路线。
+创作规划与模型配置相互独立。默认使用 Seedream 5.0 Pro 生图、Seedance 2.5 生视频（`modelProfile: "seedance-2.0"` 可切回 Seedance 2.0）。任何计费生成前，都先核实所选模型支持需要的路线。
 
 ## 智能体默认路线
 
-在智能体对话中，**Atlas Cloud Skill** 是默认的直接生成路线。用它查询模型、检查参数、上传本地素材、提交图片或视频任务、轮询并获取结果。只有 Skill 实际提交了任务，才报告 `Execution: atlas-skill`。
+当前客户端暴露了 Atlas MCP 生成工具时，所有生成都用它们（`atlas-mcp`）：每个任务提交前都会先报价。下面的 Skill、CLI、REST 路线都不报价就直接提交，只在没有 MCP 工具、或用户明确要求这条路线时使用，并且每次计费提交前都要先和用户确认模型、时长和预估费用。
+
+没有 MCP 工具时，在智能体对话中，**Atlas Cloud Skill** 是直接生成路线。用它查询模型、检查参数、上传本地素材、提交图片或视频任务、轮询并获取结果。只有 Skill 实际提交了任务，才报告 `Execution: atlas-skill`。
 
 提交后，必须每 2 秒用同一 ID 重复执行 Skill 的预测结果查询步骤，直到任务进入终态。
 
@@ -20,13 +22,13 @@ npx skills add AtlasCloudAI/atlas-cloud-skills
 
 | 选择 | 使用时机 | 可用性检查 |
 |---|---|---|
-| `atlas-skill` | 智能体交互生成的默认选择 | Atlas Cloud Skill 能在当前客户端提交媒体任务 |
-| `atlas-mcp` | 用户明确选择 MCP | 当前客户端暴露 Atlas MCP 生成工具 |
+| `atlas-skill` | 没有 Atlas MCP 工具时的智能体交互生成 | Atlas Cloud Skill 能在当前客户端提交媒体任务 |
+| `atlas-mcp` | 只要暴露了 Atlas MCP 生成工具就默认用它（每个任务先报价） | 当前客户端暴露 Atlas MCP 生成工具 |
 | `atlas-cli` | 用户明确选择终端、脚本、CI 或批量执行 | `atlas auth status`，再执行 `atlas models get` |
 | `atlas-rest` | 使用内置 Node 脚本或受控兼容执行 | `ATLASCLOUD_API_KEY` 和在线模型核验 |
 | `manual` | 没有已认证执行通道 | 只输出提示词、模型 ID 和素材清单 |
 
-MCP 服务端本身不维护后台轮询循环。走 `atlas-mcp` 时，智能体必须每 2 秒用同一预测 ID 调用一次 `atlas_get_prediction`，直到任务进入终态。
+MCP 服务端本身不维护后台轮询循环。走 `atlas-mcp` 时，智能体用同一预测 ID 反复调用 `atlas_get_prediction`，每次返回后立刻再调（服务端每次最多等约 20 秒），直到任务进入终态。
 
 不要声称 Node 脚本调用了 MCP 或智能体 Skill；两者都属于智能体层路线。也不要因为 CLI 已安装就让脚本静默切换到 CLI。
 
@@ -62,7 +64,16 @@ export ATLASCLOUD_API_KEY="<your-key>"
 }
 ```
 
-只有明确选择 CLI 时才设置 `adapter` 为 `atlas-cli`。`atlas-skill` 和 `atlas-mcp` 会被 Node 脚本明确拒绝，让智能体直接执行，避免错误报告执行通道。
+脚本的花费和安全限制：
+
+- 提交任何任务之前，先打印一行 `[spend-plan]`，列出每个新的图片任务（分镜宫格、生成的参考图）和每个新的视频任务及计费总秒数；同时打印计划编号；除非 `CONFIRM_SPEND_PLAN` 指明这份计划、且 `CONFIRM_SPEND_IMAGES` 和 `CONFIRM_SPEND_SECONDS` 覆盖它，否则就停在这里。一次同意只在第一次提交前用掉、只能用一次：同一份计划再跑要重新征得同意。改动任务配置（包括提示词）、输出目录、本地输入文件或 Atlas 密钥／地址，计划编号都会变。脚本打印的编号里带一个一次性码，存在配置旁边的 `.spend-approvals/` 里；一次同意 24 小时内只能用一次，挪动或清理这个目录后旧同意就不能再用。默认什么都不放行，`GRID_ONLY` / `REFS_ONLY` 的图片也同样过闸。把计划和预估费用给用户看，用户同意后才设置 `CONFIRM_SPEND_PLAN=<计划编号> CONFIRM_SPEND_IMAGES=<张数> CONFIRM_SPEND_SECONDS=<总秒数>`。已缓存的输出和续查的预测 ID 不计入，因为它们不会产生新费用。
+- 脚本只认 `grid`、`shot-pairs`、`reference`、`chain` 四种模式，所有时长必须是正整数秒；别的值在扣费前就报错停下。
+- Seedance 2.5 图生视频的画幅跟随输入图（`ratio` 只接受 `adaptive`），所以脚本对它固定发 `adaptive`；拼接时仍按 `video.ratio` 缩放。
+- 视频任务绝不会自动重新提交。已完成但没有原生音轨的视频已经扣过费：脚本把它保存为 `<阶段>.no-audio.mp4` 并停下，要不要再花钱重做由用户决定。`audio.outputRetries` 不再支持。
+- 任务配置不能修改 API 主机（确实需要别的主机时，在环境变量里设 `ATLASCLOUD_API_BASE`）；`apiKeyEnv` 只能是 `ATLASCLOUD_*` 变量；可执行文件只从环境变量读取（`FFMPEG_PATH`、`FFPROBE_PATH`、`ATLAS_CLI_COMMAND`）。
+- `outDir`、本地参考音频和本地参考图必须在任务目录内（参考图也可以放在 skill 自己的目录里；符号链接按实际指向判断），参考音频必须真的是 WAV、MP3、AAC、M4A、OGG 或 FLAC，参考图必须真的是 PNG、JPEG 或 WebP。
+
+只有明确选择 CLI 时才设置 `adapter` 为 `atlas-cli`。脚本自己的花费计划就是这些任务的同意，所以调用 `atlas generate` 时带 `--spend-confirm off`（需要 Atlas CLI 0.1.44 及以上）。`atlas-skill` 和 `atlas-mcp` 会被 Node 脚本明确拒绝，让智能体直接执行，避免错误报告执行通道。
 
 R2V 任务的 Storyboard 参考图必须符合在线服务当前接受的图片限制。若超出限制，只重新排布同一套有序分镜，不要为此改变用户希望的视频画幅。
 
@@ -79,7 +90,7 @@ R2V 任务的 Storyboard 参考图必须符合在线服务当前接受的图片�
 }
 ```
 
-脚本会恢复轮询和下载，不会再次提交计费任务。`starting`、`queued`、`pending`、`processing` 是进行中状态；`completed`、`succeeded` 是成功终态；`failed`、`timeout`、`canceled` 是失败终态。推理时间缺失、本地轮询窗口结束、对话中断或临时查询失败都不能授权创建替代任务。只有任务明确进入失败终态并作出明确重试决定后，才可以创建新预测任务。
+脚本会恢复轮询和下载，不会再次提交计费任务。`starting`、`queued`、`pending`、`processing` 是进行中状态；`completed`、`succeeded` 是成功终态；`failed`、`timeout`、`canceled` 是失败终态。推理时间缺失、本地轮询窗口结束、对话中断或临时查询失败都不能授权创建替代任务。只有任务明确进入失败终态、并且用户同意重试后，才可以创建新预测任务。
 
 本工作流的四种 Atlas 执行路线都使用 2 秒状态查询周期。`atlas-skill` 和 `atlas-mcp` 的循环由智能体负责，其中 MCP 调用 `atlas_get_prediction`；内置 REST 和 CLI 适配器则在代码中强制执行。REST/CLI 的进度日志仍每 32 秒输出一次，默认本地轮询窗口仍为 900 秒。若底层通用示例使用其他周期，以本工作流的 2 秒规则为准。
 

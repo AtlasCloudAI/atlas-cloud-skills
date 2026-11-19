@@ -6,7 +6,7 @@ submit → poll flow. What changes is the model and its input fields:
 | Task | Example models | Main input fields |
 |------|----------------|-------------------|
 | Text-to-speech (TTS) | `bytedance/seed-audio-1.0`, `xai/tts-v1`, ElevenLabs | `text` (+ voice/format/sample_rate) |
-| Music / songs | `suno/chirp-v5`, `minimax/music-2.6` | `prompt` and/or `lyrics` |
+| Music / songs | `suno/chirp-v6`, `minimax/music-2.6` | `prompt` and/or `lyrics` |
 | Speech-to-text (ASR) | `bytedance/seed-asr-2.0`, `xai/stt-v1` | `audio_url` (+ language/format) |
 
 > Discover audio models at runtime with `GET /api/v1/models` filtered to `type == "Audio"`,
@@ -69,7 +69,7 @@ urls = run_audio_task("bytedance/seed-audio-1.0", text="Welcome to Atlas Cloud."
 print("audio url:", urls[0])
 
 # --- Music generation ---
-urls = run_audio_task("suno/chirp-v5", prompt="upbeat synthwave song about coding at night")
+urls = run_audio_task("suno/chirp-v6", prompt="upbeat synthwave song about coding at night")
 print("song url:", urls[0])
 
 # --- Speech-to-text ---
@@ -118,7 +118,7 @@ async function runAudioTask(model: string, params: Record<string, unknown>): Pro
 // TTS
 console.log(await runAudioTask("bytedance/seed-audio-1.0", { text: "Welcome to Atlas Cloud." }));
 // Music
-console.log(await runAudioTask("suno/chirp-v5", { prompt: "gentle acoustic morning jingle" }));
+console.log(await runAudioTask("suno/chirp-v6", { prompt: "gentle acoustic morning jingle" }));
 // Speech-to-text
 console.log(await runAudioTask("bytedance/seed-asr-2.0", { audio_url: "https://example.com/interview.mp3" }));
 ```
@@ -138,7 +138,7 @@ curl -s -X POST "https://api.atlascloud.ai/api/v1/model/generateAudio" \
 curl -s -X POST "https://api.atlascloud.ai/api/v1/model/generateAudio" \
   -H "Authorization: Bearer $ATLASCLOUD_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model": "suno/chirp-v5", "prompt": "upbeat synthwave song about coding at night"}'
+  -d '{"model": "suno/chirp-v6", "prompt": "upbeat synthwave song about coding at night"}'
 
 # --- Speech-to-text: submit ---
 curl -s -X POST "https://api.atlascloud.ai/api/v1/model/generateAudio" \

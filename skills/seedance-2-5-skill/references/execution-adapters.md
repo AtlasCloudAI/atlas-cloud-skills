@@ -1,14 +1,21 @@
 # Atlas execution adapters
 
 Creative planning and the model profile are independent from the execution
-channel. Default profile: Seedream 5.0 Pro for stills and Seedance 2.0 for
-video. Verify that a chosen model supports the required route before a billable
+channel. Default profile: Seedream 5.0 Pro for stills and Seedance 2.5 for
+video (`modelProfile: "seedance-2.0"` selects the Seedance 2.0 fallback). Verify that a chosen model supports the required route before a billable
 generation.
 
 ## Default agent route
 
-In an agent conversation, the **Atlas Cloud Skill** is the default direct
-generation route. Use it to discover models, inspect parameters, upload local
+If Atlas MCP generation tools are exposed in the current client, use them
+(`atlas-mcp`) for every generation: they quote each job before it runs. The
+Skill, CLI and REST routes below submit without a quote, so use them only when
+no MCP tools are available or the user explicitly asks for that route, and
+confirm the model, duration and estimated cost with the user before each
+billable submission.
+
+Without MCP tools, in an agent conversation, the **Atlas Cloud Skill** is the
+direct generation route. Use it to discover models, inspect parameters, upload local
 assets, submit image or video generation, poll, and retrieve results. Report
 `Execution: atlas-skill` only when the Skill actually submitted the job.
 After submission, repeat the Skill's prediction-result step with the same ID
@@ -26,8 +33,8 @@ Then refresh the agent's Skill registry if the host requires it.
 
 | Choice | Use it when | Availability check |
 |---|---|---|
-| `atlas-skill` | Default for an interactive agent generation | The Atlas Cloud Skill can submit media in this client |
-| `atlas-mcp` | The user explicitly selects MCP | Atlas MCP generation tools are exposed in the current client |
+| `atlas-skill` | Interactive agent generation when no Atlas MCP tools are exposed | The Atlas Cloud Skill can submit media in this client |
+| `atlas-mcp` | Default whenever Atlas MCP generation tools are exposed (quotes before each job) | Atlas MCP generation tools are exposed in the current client |
 | `atlas-cli` | The user explicitly selects terminal, script, CI, or batch execution | `atlas auth status`, then `atlas models get` |
 | `atlas-rest` | The bundled Node runner or a controlled compatibility run | `ATLASCLOUD_API_KEY` and live model verification |
 | `manual` | No authenticated executor is available | Return prompts, model IDs, and asset list only |
@@ -85,7 +92,44 @@ execution path or billing destination.
 }
 ```
 
-Set `adapter` to `atlas-cli` only when the CLI route was explicitly selected.
+Spend and safety limits in the runner:
+
+- Before anything is submitted it prints a `[spend-plan]` line with every new
+  image job (storyboard grid, generated references) and every new video job
+  with the total billed seconds, plus a plan id, and it stops there unless
+  `CONFIRM_SPEND_PLAN` names that plan and `CONFIRM_SPEND_IMAGES` /
+  `CONFIRM_SPEND_SECONDS` cover it. Nothing is approved by default, and
+  `GRID_ONLY` / `REFS_ONLY` runs are gated the same way for their images. Show
+  the user the plan and its estimated cost, and set
+  `CONFIRM_SPEND_PLAN=<plan id> CONFIRM_SPEND_IMAGES=<images> CONFIRM_SPEND_SECONDS=<seconds>`
+  only after they approve it. An approval is spent before the first submission
+  and works once: running the same plan again needs a new yes. Any change to the
+  job config (prompts included), its output folder, its local input files or
+  the Atlas key/endpoint gives a new plan id. The id printed by the run includes
+  a one-time code kept in `.spend-approvals/` next to the config; an approval
+  works for one run within 24 hours, and if that folder is moved or cleaned
+  the old approval no longer works. Cached outputs
+  and resumed prediction IDs are not counted, because they bill nothing new.
+- The runner accepts only the modes `grid`, `shot-pairs`, `reference` and
+  `chain`, and every duration must be a positive whole number of seconds; any
+  other value stops the run before anything is billed.
+- Seedance 2.5 image-to-video takes its frame shape from the input image (its
+  `ratio` accepts only `adaptive`), so the runner sends `adaptive` there; the
+  stitch step still scales to `video.ratio`.
+- A video task is never resubmitted automatically. A completed video without its
+  native audio track has already been billed: the runner keeps it as
+  `<stage>.no-audio.mp4` and stops, and only the user decides whether to pay for
+  a new attempt. `audio.outputRetries` is no longer supported.
+- The job config cannot change the API host (set `ATLASCLOUD_API_BASE` in the
+  environment if you really need another one), `apiKeyEnv` must name an
+  `ATLASCLOUD_*` variable, and executables come only from the environment
+  (`FFMPEG_PATH`, `FFPROBE_PATH`, `ATLAS_CLI_COMMAND`).
+- `outDir`, local audio references and local reference images must stay inside
+  the job directory (reference images may also sit in the skill's own folder;
+  symlinks are judged by where they point). An audio reference must really be
+  WAV, MP3, AAC, M4A, OGG or FLAC, and a reference image PNG, JPEG or WebP.
+
+Set `adapter` to `atlas-cli` only when the CLI route was explicitly selected. The runner's spend plan is the approval for its jobs, so it calls `atlas generate` with `--spend-confirm off` (Atlas CLI 0.1.44 or later).
 `atlas-skill` and `atlas-mcp` are intentionally rejected by the Node runner so
 the agent can execute them directly rather than misreporting the channel.
 
@@ -114,8 +158,8 @@ billable task. Active states are `starting`, `queued`, `pending`, and
 `processing`; successful states are `completed` and `succeeded`; terminal
 failure states are `failed`, `timeout`, and `canceled`. Missing inference time,
 an expired local polling window, an interrupted turn, or a temporary query
-failure never authorizes a replacement task. Only an explicit retry decision
-after a terminal failure may create a new prediction.
+failure never authorizes a replacement task. Only the user's yes to a retry,
+after a terminal failure, may create a new prediction.
 
 All four Atlas execution routes use a 2-second status-query interval in this
 workflow. The agent owns the loop for `atlas-skill` and `atlas-mcp`; the MCP

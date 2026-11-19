@@ -4,7 +4,7 @@
   "outDir": "build",
   "modelProfile": "seedance-default",
   "execution": { "adapter": "atlas-rest", "apiKeyEnv": "ATLASCLOUD_API_KEY", "verifyModels": true },
-  "video": { "t2vModel": "bytedance/seedance-2.0/text-to-video", "model": "bytedance/seedance-2.0/image-to-video", "resolution": "1080p", "ratio": "9:16", "duration": 15, "generate_audio": true, "watermark": false },
+  "video": { "t2vModel": "bytedance/seedance-2.5/text-to-video", "model": "bytedance/seedance-2.5/image-to-video", "resolution": "1080p", "ratio": "9:16", "duration": 15, "generate_audio": true, "watermark": false },
   "styleSuffix": "Warm hand-drawn food-animation style, vertical frame, a late-night kitchen, black iron wok and stove flame, one pair of clean hands and food only, no face or extra hands, soft warm light, one clear camera intention per shot.",
   "segments": [
     { "t2v": true, "duration": 15, "prompt": "First half of a beef stir-fry. Open on an extreme close-up of thin beef hitting smoking oil and curling at the edges. One hand stirs over high heat; slowly push in. Move the beef aside, bloom garlic, ginger, fermented beans, and sliced chili. End with the aromatics smoking in the wok." },

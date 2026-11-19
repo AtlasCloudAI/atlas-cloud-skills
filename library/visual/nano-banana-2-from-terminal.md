@@ -40,7 +40,7 @@ atlas generate image google/nano-banana-2/text-to-image \
 ## Tips & variations
 
 - Why Nano Banana 2: it's the cheap/fast tier — perfect for iterating on many prompt ideas before committing to a pricier, higher-fidelity render. Step up to Nano Banana Pro when you need maximum detail or stronger text rendering.
-- Editing instead of generating? Use the Nano Banana 2 Edit model and pass your source image (upload a local file first via `atlas_upload_media` to get a URL).
+- Editing instead of generating? Use the Nano Banana 2 Edit model and pass your source image (upload a local file first via `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server) to get a URL).
 - Scripting a batch? Loop the CLI over a list of prompts and collect the output URLs.
 
 ## Related

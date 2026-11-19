@@ -16,7 +16,7 @@ A short, casual "creator holds and reveals the product" video in 9:16, styled to
 
 ## Steps
 
-1. **Upload the product hero** — point the agent at your product photo. → `atlas_upload_media`.
+1. **Upload the product hero** — point the agent at your product photo. → `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server).
 2. **Write UGC hooks** — "Give me 3 first-person unboxing hooks + a 2-line voiceover for <product>, casual creator tone." → `atlas_chat` with **Claude**.
 3. **Stage a realistic UGC frame** — "Place this product in a hand against a cozy bedroom desk, phone-camera look, 9:16." → `atlas_generate_image` (edit) with **Nano Banana Pro**.
    > Tip: ask the agent to `atlas_search_docs` for the edit model first to confirm the live image-input field name and aspect-ratio options.

@@ -62,7 +62,7 @@ Don't start from a blank prompt — start from a workflow. Three to try first:
 Quickly integrate Atlas Cloud API into your projects. This skill provides:
 
 - Complete API reference for image generation, video generation, LLM chat, media upload, and quick generation
-- All 9 MCP tools documented: `atlas_list_models`, `atlas_search_docs`, `atlas_get_model_info`, `atlas_generate_image`, `atlas_generate_video`, `atlas_quick_generate`, `atlas_chat`, `atlas_get_prediction`, `atlas_upload_media`
+- Every Atlas MCP tool documented, with which clients get which: model discovery (`atlas_list_models`, including ready-made Workflows, and `atlas_get_model_info`), help-doc search (`atlas_search_docs`), generation with a quote before every charge (`atlas_generate_image`, `atlas_generate_video`, `atlas_generate_audio`, `atlas_transcribe_audio`, `atlas_quick_generate`, `atlas_chat`), results and history (`atlas_get_prediction`, `atlas_list_predictions`), the Asset Library (`atlas_search_assets`, `atlas_use_assets`), uploads (`atlas_get_upload_url` on the hosted server, `atlas_upload_media` locally, plus the upload card and chat-attachment import in apps that support them), `atlas_cancel_quote`, and balance and usage
 - Ready-to-use code templates in Python, Node.js/TypeScript, and cURL
 - Popular model IDs with pricing info
 - OpenAI SDK compatibility guide for LLM models

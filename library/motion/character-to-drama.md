@@ -18,7 +18,7 @@ A short, multi-shot dramatic scene (3–5 clips) starring the *same* character a
 ## Steps
 
 1. **Build the character sheet** — run the [Character Reference Sheet](../visual/character-sheet.md) recipe to get multi-pose, multi-expression reference images of your character.
-2. **Upload the references** — ask the agent to upload the sheet (or your best 1–3 frames) so they become URLs → maps to `atlas_upload_media`.
+2. **Upload the references** — ask the agent to upload the sheet (or your best 1–3 frames) so they become URLs → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server).
 3. **Write the shot list** — "Turn this logline into 4 shots with camera, blocking, and emotion for each." → maps to `atlas_chat` with **Claude**.
 4. **Block each shot cheaply** — feed the reference + a shot prompt → maps to `atlas_generate_video` with **Seedance 2.5 reference-to-video** (`seedance-2.0-fast` first).
    > Tip: ask the agent to `atlas_search_docs` for the model first — reference-to-video expects specific reference-image fields and counts.

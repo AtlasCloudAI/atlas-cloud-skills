@@ -16,7 +16,7 @@ A crisp, well-lit product hero on a clean or styled background — the kind of s
 
 ## Steps
 
-1. **(Optional) Upload your product photo** — if you have a real shot to base it on, ask the agent to upload it → maps to `atlas_upload_media`, returns an `image_url`.
+1. **(Optional) Upload your product photo** — if you have a real shot to base it on, ask the agent to upload it → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server), returns the URL to pass as `image_url`.
 2. **Tighten the brief** — ask the agent to expand your product spec into a hero-shot prompt (surface, lighting, angle, background) → maps to `atlas_chat`.
 3. **Render the hero** — ask for a 1:1 or 4:5 studio shot, soft shadow, seamless background → maps to `atlas_generate_image` with Seedream 4.5 (pass `image_url` if you uploaded one).
 4. **Pick & polish** — generate 2–3 angles, choose the winner, ask for a tighter crop variant.

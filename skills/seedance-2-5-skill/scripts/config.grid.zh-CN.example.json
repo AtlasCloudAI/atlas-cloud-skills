@@ -7,8 +7,6 @@
     "apiKeyEnv": "ATLASCLOUD_API_KEY",
     "verifyModels": true
   },
-  "ffmpeg": "ffmpeg",
-  "ffprobe": "ffprobe",
 
   "grid": {
     "model": "bytedance/seedream-v5.0-pro/text-to-image",
@@ -19,7 +17,7 @@
   },
 
   "video": {
-    "model": "bytedance/seedance-2.0/image-to-video",
+    "model": "bytedance/seedance-2.5/image-to-video",
     "resolution": "1080p",
     "ratio": "9:16",
     "duration": 5,

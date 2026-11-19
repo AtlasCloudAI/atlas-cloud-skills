@@ -32,8 +32,9 @@ Last verified: 2026-08-03 · Provider: Atlas Cloud
 ⚠️ **The model page contradicts itself on duration.** Header text says `5-15s`,
 the "Why Choose" section says `5s or 10s`, the parameter table says
 `8 (default), 5-10`. The parameter table also omits `16:9` from `ratio` while the
-playground offers it. **Submission is the only authority** — 15s and 16:9 both
-work. Do not trust a parameter table over a live test.
+playground offers it. 15s and 16:9 both work. To check a value, ask for a quote
+(the generation tool without `confirmed`): the quote validates it against the
+live schema and spends nothing. Never submit a paid job just to test a value.
 
 ### Bias layer
 
@@ -148,10 +149,14 @@ documented enumeration was **narrower** than what submission accepts:
 | `kwaivgi/kling-v3.0-turbo/text-to-video` | `duration: 5 or 10` | 15s works |
 | `kwaivgi/kling-v3.0-pro/text-to-video` | `duration: 5 or 10` | 15s works |
 
-**Treat this as a hard rule, not a caution:** a documented enumeration is a
-hypothesis. The only authority is a submission. Cheap to test — a rejected
-submission creates no task and costs nothing, so testing the value you actually
-want is strictly better than designing around the table.
+**Treat this as a hard rule, not a caution:** for a value outside the published
+table, the quote's error decides, never a real submission. Ask for the value you
+actually want in a quote (the generation tool without `confirmed`): the Atlas
+MCP server validates every parameter against the model's live schema at that
+step, so a value outside the schema's enumeration is rejected with an error and
+nothing is spent. Take that error as the answer and use a supported value.
+Never test by submitting a real job — if the value is accepted, it runs and is
+billed.
 
 The failure this prevents is asymmetric and invisible: believing a too-narrow
 table silently degrades the spec, the run succeeds, and nothing in the output
@@ -183,11 +188,12 @@ Last verified: 2026-08-03 · Provider: Atlas Cloud
 ### Compile notes
 
 - **Second confirmed case of a wrong parameter table on this platform.** Both Kling
-  tiers document `5 or 10`; Turbo accepts 15. Treat every documented enumeration as
-  a hypothesis until submitted.
-- ⚠️ The Pro tier was **降级 to 10s on the basis of that same table without
-  testing 15s** — an avoidable mistake, and the exact error this file warns
-  against. Pro's real ceiling is still unverified.
+  tiers document `5 or 10`; Turbo accepts 15. Before designing around a
+  documented enumeration, ask for the value you want in a quote; a rejection
+  there is final.
+- ⚠️ The Pro tier was **downgraded to 10s on the basis of that same table
+  without asking for 15s in a quote** — an avoidable mistake, and the exact
+  error this file warns against. Pro's real ceiling is still unverified.
 - Resolution appears fixed at 720p, which makes this the lowest-resolution option
   in a mixed comparison. Note it rather than trying to match the others.
 - No auto-storyboard switch to disable here.

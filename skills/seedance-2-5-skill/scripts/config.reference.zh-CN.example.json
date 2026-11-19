@@ -15,12 +15,11 @@
 
   "audio": {
     "_comment": "可选参考音频。file 会先上传到 Atlas Cloud；若上传或模型校验失败会停止并提示，不会自动移除。空数组表示只由 Seedance 原生生成声音。audioRefs 使用 1 基编号选择某段使用的音频。",
-    "outputRetries": 2,
     "references": []
   },
 
   "video": {
-    "refModel": "bytedance/seedance-2.0/reference-to-video",
+    "refModel": "bytedance/seedance-2.5/reference-to-video",
     "resolution": "1080p",
     "ratio": "9:16",
     "duration": 15,

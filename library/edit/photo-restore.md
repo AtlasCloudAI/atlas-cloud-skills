@@ -19,7 +19,7 @@ rescuing the only copy of a precious shot.
 
 ## Steps
 
-1. **Upload the scan** — "Upload this scanned old photo and give me the URL." → maps to `atlas_upload_media`; keep the `download_url`.
+1. **Upload the scan** — "Upload this scanned old photo and give me the URL." → maps to `atlas_get_upload_url` on the hosted connector (`atlas_upload_media` on a local server); keep the returned URL.
 2. **Restore** — "Repair scratches, tears, and fading, recover facial detail, and clean up noise. Keep the original composition and likeness." → maps to `atlas_generate_image` with **Nano Banana 2 (edit)**, passing the uploaded URL as the input image.
    > Tip: ask the agent to `atlas_search_docs` for the model first to confirm the live edit schema and the largest supported output size for an upscale pass.
 3. **Upscale / sharpen** — re-run on the restored result requesting a larger, sharper render (a dedicated upscale model may exist — have the agent `atlas_list_models` / `atlas_search_docs` for "upscale" and pick the live one).
