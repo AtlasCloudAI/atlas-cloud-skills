@@ -38,7 +38,10 @@ function prediction(value) {
   const data = view ?? (wrapped ? value.data : envelope ?? value);
   const raw = data?.outputs ?? data?.output_urls ?? data?.urls ?? data?.output;
   const list = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-  const outputs = list.map(item => (typeof item === "string" ? item : item?.url ?? item?.remote_url)).filter(Boolean);
+  // The CLI keeps an output it can't classify (for example a Seedance tail-frame .png in video mode) as
+  // { text: "https://…" } rather than { url }: take any http(s) link it carries.
+  const link = value => (typeof value === "string" && /^https?:\/\//i.test(value.trim()) ? value.trim() : undefined);
+  const outputs = list.map(item => link(item) ?? link(item?.url) ?? link(item?.remote_url) ?? link(item?.text)).filter(Boolean);
   return {
     ...data,
     id: data?.id ?? data?.prediction_id,

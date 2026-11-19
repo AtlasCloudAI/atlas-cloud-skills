@@ -654,8 +654,7 @@ function cleanupAccidentalOverlay(b) {
 }
 
 async function main() {
-  mkdirSync(DIR, { recursive: true });
-  const b = DIR;
+  const b = DIR;   // created by validateJob, after it checks the folder stays inside the job directory
   const requiredModels = [IMG_MODEL];
   if (MODE === "reference") requiredModels.push(CFG.video?.refModel || PROFILE.video.r2v);
   else if (MODE === "chain") requiredModels.push(VID_MODEL, CFG.video?.t2vModel || PROFILE.video.t2v);
