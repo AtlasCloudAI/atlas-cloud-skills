@@ -25,10 +25,10 @@ Use [Atlas Cloud](https://www.atlascloud.ai?utm_source=github&utm_campaign=atlas
 - 🎬 **Video** (246) — Seedance 2.5 Flash · Seedance 2.5 · Bach 1.0 Pro · MiniMax H3 Max · MiniMax H3 Fast · Gemini Omni 1.1 Flash
 - 🎨 **Image** (160) — MiniMax H3-Image Highspeed · MiniMax H3-Image · GPT Image 2.6 Sunburst · GPT Image 2.6 Flare
 - 🧊 **3D** (14) — Seed3D 2.0 · Tripo H3.1 · Hunyuan 3D Rapid · Hunyuan 3D Pro
-- 💬 **LLM** (99) — Hy4 · Gemini 4 Neon · Gemini 4 Hydrogen · Gemini 4 Carbon
+- 💬 **LLM** (98) — Hy4 · Gemini 4 Neon · Gemini 4 Hydrogen · Gemini 4 Carbon
 - 🔊 **Audio (TTS · Music · ASR)** (21) — Seed Audio 1.0 · MiniMax Speech 2.6 Turbo · MiniMax Speech 2.6 HD · xAI TTS v1
 
-- 📚 **Explore more** — [all 578 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
+- 📚 **Explore more** — [all 577 live models »](https://www.atlascloud.ai/models?utm_source=github&utm_campaign=atlas-cloud-skills)
 <!-- ATLAS-MODELS:END -->
 
 ## Contents
